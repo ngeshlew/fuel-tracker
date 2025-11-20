@@ -1,7 +1,7 @@
 {
-  "name": "Electricity Tracker",
-  "short_name": "ElecTracker",
-  "description": "AI-powered electricity consumption tracking and analytics dashboard",
+  "name": "Fuel Tracker",
+  "short_name": "FuelTracker",
+  "description": "Comprehensive fuel tracking dashboard for monitoring fuel consumption, mileage and fuel costs with real-time analytics",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -32,10 +32,10 @@
   ],
   "shortcuts": [
     {
-      "name": "Add Reading",
-      "short_name": "Add Reading",
-      "description": "Quickly add a new meter reading",
-      "url": "/?action=add-reading",
+      "name": "Add Fuel Topup",
+      "short_name": "Add Topup",
+      "description": "Quickly add a new fuel topup",
+      "url": "/?action=add-topup",
       "icons": [
         {
           "src": "/favicon.svg",
@@ -46,7 +46,7 @@
     {
       "name": "View Analytics",
       "short_name": "Analytics",
-      "description": "View consumption analytics",
+      "description": "View fuel consumption analytics",
       "url": "/analytics",
       "icons": [
         {
