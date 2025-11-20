@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "start": "npm run db:generate && npm run db:push && node dist/index.js",
+    "build": "prisma generate && tsc",
+    "start": "npm run db:push && node dist/index.js",
+    "postinstall": "prisma generate",
     "dev": "nodemon src/index.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
