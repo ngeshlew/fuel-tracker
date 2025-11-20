@@ -16,7 +16,7 @@ import {
 } from 'recharts';
 import { Icon } from "@/components/ui/icon";
 import { getSeasonColor } from "@/utils/seasonalColors";
-import { useElectricityStore } from '../../store/useElectricityStore';
+import { useFuelStore } from '../../store/useFuelStore';
 import { useTariffStore } from '../../store/useTariffStore';
 
 interface SeasonalData {
@@ -33,7 +33,7 @@ interface SeasonalData {
 }
 
 export const SeasonalAnalytics: React.FC = () => {
-  const { chartData } = useElectricityStore();
+  const { chartData } = useFuelStore();
   const { getMonthlyTargets } = useTariffStore();
 
   // Calculate seasonal data
@@ -80,7 +80,7 @@ export const SeasonalAnalytics: React.FC = () => {
         };
       }
 
-      const totalConsumption = dataPoints.reduce((sum, point) => sum + point.kwh, 0);
+      const totalConsumption = dataPoints.reduce((sum, point) => sum + point.litres, 0);
       const totalCost = dataPoints.reduce((sum, point) => sum + point.cost, 0);
       const days = dataPoints.length;
       const avgDailyConsumption = totalConsumption / days;
@@ -128,7 +128,7 @@ export const SeasonalAnalytics: React.FC = () => {
 
     const otherAvg = otherSeasons.reduce((sum, dataPoints) => {
       if (dataPoints.length === 0) return sum;
-      const total = dataPoints.reduce((s, point) => s + point.kwh, 0);
+      const total = dataPoints.reduce((s, point) => s + point.litres, 0);
       return sum + (total / dataPoints.length);
     }, 0) / otherSeasons.length;
 

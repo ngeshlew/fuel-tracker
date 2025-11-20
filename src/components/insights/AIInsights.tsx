@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Icon } from "@/components/ui/icon";
-import { useElectricityStore } from '../../store/useElectricityStore';
+import { useFuelStore } from '../../store/useFuelStore';
 
 interface Insight {
   id: string;
@@ -24,12 +24,12 @@ interface ConsumptionPattern {
   averageDailyUsage: number;
   weeklyPattern: { [key: string]: number };
   seasonalTrend: 'increasing' | 'decreasing' | 'stable';
-  costPerKwh: number;
+  costPerLitre: number;
   efficiencyScore: number;
 }
 
 export const AIInsights: React.FC = () => {
-  const { readings } = useElectricityStore();
+  const { topups, chartData } = useFuelStore();
   const [insights, setInsights] = useState<Insight[]>([]);
   const [patterns, setPatterns] = useState<ConsumptionPattern | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -45,8 +45,8 @@ export const AIInsights: React.FC = () => {
       // Simulate AI analysis delay
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const newInsights = generateInsights(readings, []);
-      const newPatterns = analyzePatterns(readings, []);
+      const newInsights = generateInsights(topups, chartData);
+      const newPatterns = analyzePatterns(topups, chartData);
       
       setInsights(newInsights);
       setPatterns(newPatterns);
@@ -58,15 +58,15 @@ export const AIInsights: React.FC = () => {
   };
 
   // Generate AI insights based on consumption data
-  const generateInsights = (readings: any[], _chartData: any[]): Insight[] => {
+  const generateInsights = (topups: any[], chartData: any[]): Insight[] => {
     const insights: Insight[] = [];
     
-    if (readings.length < 7) {
+    if (topups.length < 7) {
       insights.push({
         id: 'insufficient-data',
         type: 'recommendation',
         title: 'More Data Needed',
-        description: 'Add more meter readings to unlock AI-powered insights and recommendations.',
+        description: 'Add more fuel topups to unlock AI-powered insights and recommendations.',
         impact: 'medium',
         confidence: 0.9,
         category: 'usage',
@@ -78,12 +78,12 @@ export const AIInsights: React.FC = () => {
     }
 
     // Calculate average daily consumption
-    const totalConsumption = readings.reduce((sum, reading) => sum + (reading.consumption || 0), 0);
-    const days = readings.length;
+    const totalConsumption = chartData.reduce((sum, point) => sum + (point.litres || 0), 0);
+    const days = chartData.length;
     const avgDailyConsumption = totalConsumption / days;
 
-    // UK average daily consumption (kWh)
-    const ukAverage = 8.5;
+    // UK average daily consumption (litres)
+    const ukAverage = 2.5;
     const efficiencyRatio = avgDailyConsumption / ukAverage;
 
     // High consumption alert
@@ -92,7 +92,7 @@ export const AIInsights: React.FC = () => {
         id: 'high-consumption',
         type: 'anomaly',
         title: 'Above Average Consumption',
-        description: `Your daily consumption (${avgDailyConsumption.toFixed(1)} kWh) is ${((efficiencyRatio - 1) * 100).toFixed(0)}% above UK average.`,
+        description: `Your daily consumption (${avgDailyConsumption.toFixed(1)} L) is ${((efficiencyRatio - 1) * 100).toFixed(0)}% above UK average.`,
         impact: 'high',
         confidence: 0.85,
         category: 'usage',
@@ -103,7 +103,7 @@ export const AIInsights: React.FC = () => {
     }
 
     // Cost optimization
-    const totalCost = readings.reduce((sum, reading) => sum + (reading.cost || 0), 0);
+    const totalCost = chartData.reduce((sum, point) => sum + (point.cost || 0), 0);
     const avgDailyCost = totalCost / days;
     
     if (avgDailyCost > 2.5) {
@@ -111,7 +111,7 @@ export const AIInsights: React.FC = () => {
         id: 'high-cost',
         type: 'recommendation',
         title: 'Cost Optimization Opportunity',
-        description: `Daily electricity cost is £${avgDailyCost.toFixed(2)}. Consider switching to off-peak usage or energy-efficient appliances.`,
+        description: `Daily fuel cost is £${avgDailyCost.toFixed(2)}. Consider fuel-efficient driving habits or alternative fuel options.`,
         impact: 'high',
         confidence: 0.8,
         category: 'cost',
@@ -122,11 +122,11 @@ export const AIInsights: React.FC = () => {
     }
 
     // Usage pattern analysis
-    const recentReadings = readings.slice(-7);
-    const hasConsistentUsage = recentReadings.every((reading, index) => {
+    const recentData = chartData.slice(-7);
+    const hasConsistentUsage = recentData.every((point, index) => {
       if (index === 0) return true;
-      const prevReading = recentReadings[index - 1];
-      const diff = Math.abs((reading.consumption || 0) - (prevReading.consumption || 0));
+      const prevPoint = recentData[index - 1];
+      const diff = Math.abs((point.litres || 0) - (prevPoint.litres || 0));
       return diff < 5; // Less than 5 kWh difference
     });
 
@@ -200,14 +200,14 @@ export const AIInsights: React.FC = () => {
   };
 
   // Analyze consumption patterns
-  const analyzePatterns = (readings: any[], _chartData: any[]): ConsumptionPattern => {
-    const totalConsumption = readings.reduce((sum, reading) => sum + (reading.consumption || 0), 0);
-    const days = readings.length;
+  const analyzePatterns = (topups: any[], chartData: any[]): ConsumptionPattern => {
+    const totalConsumption = chartData.reduce((sum, point) => sum + (point.litres || 0), 0);
+    const days = chartData.length;
     const avgDailyUsage = totalConsumption / days;
     
-    // Calculate cost per kWh
-    const totalCost = readings.reduce((sum, reading) => sum + (reading.cost || 0), 0);
-    const costPerKwh = totalCost / totalConsumption;
+    // Calculate cost per litre
+    const totalCost = chartData.reduce((sum, point) => sum + (point.cost || 0), 0);
+    const costPerLitre = totalCost / totalConsumption;
 
     // Analyze weekly patterns (simplified)
     const weeklyPattern = {
@@ -221,7 +221,7 @@ export const AIInsights: React.FC = () => {
     };
 
     // Calculate efficiency score (0-100)
-    const ukAverage = 8.5;
+    const ukAverage = 2.5;
     const efficiencyScore = Math.max(0, Math.min(100, 100 - ((avgDailyUsage - ukAverage) / ukAverage) * 100));
 
     return {
@@ -229,7 +229,7 @@ export const AIInsights: React.FC = () => {
       averageDailyUsage: avgDailyUsage,
       weeklyPattern,
       seasonalTrend: 'stable',
-      costPerKwh,
+      costPerLitre,
       efficiencyScore
     };
   };
@@ -272,10 +272,10 @@ export const AIInsights: React.FC = () => {
   };
 
   useEffect(() => {
-    if (readings.length > 0) {
+    if (topups.length > 0) {
       analyzeConsumption();
     }
-  }, [readings]);
+  }, [topups]);
 
   return (
     <div className="space-y-6">
@@ -326,7 +326,7 @@ export const AIInsights: React.FC = () => {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">
-                  £{patterns.costPerKwh.toFixed(3)}
+                  £{patterns.costPerLitre.toFixed(3)}
                 </div>
                 <div className="text-sm text-muted-foreground">Cost per kWh</div>
               </div>
@@ -358,7 +358,7 @@ export const AIInsights: React.FC = () => {
                 <Icon name="info" className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Insights Available</h3>
                 <p className="text-muted-foreground text-center">
-                  Add more meter readings to unlock AI-powered insights and recommendations.
+                  Add more fuel topups to unlock AI-powered insights and recommendations.
                 </p>
               </CardContent>
             </Card>

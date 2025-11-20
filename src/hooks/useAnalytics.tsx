@@ -59,7 +59,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({
         const cost = kwh * 0.30;
         results.push({
           date: new Date(curr.date).toISOString().split('T')[0],
-          kwh,
+          litres: kwh,
           cost,
         });
       }

@@ -119,20 +119,21 @@ router.get('/summary', async (req, res, next) => {
       else if (difference < -threshold) trend = 'decreasing';
     }
 
-    res.json({
-      success: true,
-      data: {
-        totalConsumption: Math.round(totalConsumption * 100) / 100,
-        totalCost: Math.round(totalCost * 100) / 100,
-        dailyAverage: Math.round(dailyAverage * 100) / 100,
-        trend,
-        topupCount: topups.length,
-        period: {
-          start: topups[0]?.date || null,
-          end: topups[topups.length - 1]?.date || null
-        }
-      }
-    });
+        res.json({
+          success: true,
+          data: {
+            totalLitres: Math.round(totalConsumption * 100) / 100,
+            totalCost: Math.round(totalCost * 100) / 100,
+            dailyAverage: Math.round(dailyAverage * 100) / 100,
+            averageEfficiency: averageEfficiency ? Math.round(averageEfficiency * 100) / 100 : undefined,
+            trend,
+            topupCount: topups.length,
+            period: {
+              start: topups[0]?.date || null,
+              end: topups[topups.length - 1]?.date || null
+            }
+          }
+        });
   } catch (error) {
     next(createError('Failed to fetch summary analytics', 500));
   }

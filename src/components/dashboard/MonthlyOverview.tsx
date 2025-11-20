@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Icon } from "@/components/ui/icon";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useElectricityStore } from '../../store/useElectricityStore';
+import { useFuelStore } from '../../store/useFuelStore';
 import { startOfMonth, endOfMonth, eachWeekOfInterval } from 'date-fns';
 import { formatDateUK, getWeekStart, getWeekEnd, getWeekNumber } from '../../utils/dateFormatters';
 
@@ -10,7 +10,7 @@ interface WeeklyData {
   week: number;
   startDate: Date;
   endDate: Date;
-  kwh: number;
+  litres: number;
   cost: number;
   days: number;
 }
@@ -20,22 +20,21 @@ interface MonthlyOverviewProps {
 }
 
 export const MonthlyOverview: React.FC<MonthlyOverviewProps> = ({ currentMonth }) => {
-  const { readings, preferences } = useElectricityStore();
+  const { topups } = useFuelStore();
 
   const monthlyData = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
     
-    // Filter readings for current month
-    const monthReadings = readings.filter(reading => {
-      const readingDate = new Date(reading.date);
-      return readingDate >= monthStart && readingDate <= monthEnd;
+    // Filter topups for current month
+    const monthTopups = topups.filter(topup => {
+      const topupDate = new Date(topup.date);
+      return topupDate >= monthStart && topupDate <= monthEnd && !topup.isFirstTopup;
     });
 
-
-    if (monthReadings.length < 2) {
+    if (monthTopups.length === 0) {
       return {
-        totalKwh: 0,
+        totalLitres: 0,
         totalCost: 0,
         averageDaily: 0,
         weeklyBreakdown: [],
@@ -43,126 +42,43 @@ export const MonthlyOverview: React.FC<MonthlyOverviewProps> = ({ currentMonth }
       };
     }
 
-    // Calculate total consumption for the month
-    let totalKwh = 0;
+    // Calculate total consumption for the month (litres added)
+    let totalLitres = 0;
     let totalCost = 0;
     
-    for (let i = 1; i < monthReadings.length; i++) {
-      const consumption = monthReadings[i].reading - monthReadings[i - 1].reading;
-      if (consumption > 0) {
-        totalKwh += consumption;
-        totalCost += consumption * preferences.unitRate;
-      }
-    }
+    monthTopups.forEach(topup => {
+      totalLitres += topup.litres;
+      totalCost += topup.totalCost;
+    });
 
     // Calculate weekly breakdown using Monday as week start
     const weeks = eachWeekOfInterval({ start: monthStart, end: monthEnd });
     const weeklyBreakdown: WeeklyData[] = weeks.map((weekStart) => {
-      // Use our custom week calculation for Monday start
       const actualWeekStart = getWeekStart(weekStart);
       const actualWeekEnd = getWeekEnd(weekStart);
       
-      // Get all readings that fall within this week (including boundary dates)
-      const weekReadings = readings.filter(reading => {
-        const readingDate = new Date(reading.date);
-        return readingDate >= actualWeekStart && readingDate <= actualWeekEnd;
+      // Get all topups that fall within this week
+      const weekTopups = monthTopups.filter(topup => {
+        const topupDate = new Date(topup.date);
+        return topupDate >= actualWeekStart && topupDate <= actualWeekEnd;
       });
 
-      let weekKwh = 0;
+      let weekLitres = 0;
       let weekCost = 0;
       
-      // Sort readings by date to ensure proper order
-      const sortedWeekReadings = weekReadings.sort((a, b) => 
-        new Date(a.date).getTime() - new Date(b.date).getTime()
-      );
-      
-      // Calculate consumption within this week
-      for (let i = 1; i < sortedWeekReadings.length; i++) {
-        const currentReading = sortedWeekReadings[i];
-        const previousReading = sortedWeekReadings[i - 1];
-        
-        // Skip consumption calculation if current reading is marked as first reading
-        if (currentReading.isFirstReading) {
-          continue;
-        }
-        
-        const consumption = currentReading.reading - previousReading.reading;
-        if (consumption > 0) {
-          weekKwh += consumption;
-          weekCost += consumption * preferences.unitRate;
-        }
-      }
-      
-      // If no readings in this week, try to find consumption from readings that span this week
-      if (sortedWeekReadings.length === 0) {
-        // Find the last reading before or on the start of this week
-        const previousReadings = monthReadings.filter(reading => {
-          const readingDate = new Date(reading.date);
-          return readingDate <= actualWeekStart;
-        }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        
-        // Find the first reading after or on the end of this week
-        const nextReadings = monthReadings.filter(reading => {
-          const readingDate = new Date(reading.date);
-          return readingDate >= actualWeekEnd;
-        }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        
-        if (previousReadings.length > 0 && nextReadings.length > 0) {
-          const lastReadingBeforeWeek = previousReadings[0];
-          const firstReadingAfterWeek = nextReadings[0];
-          
-          // Only calculate if neither is a first reading
-          if (!lastReadingBeforeWeek.isFirstReading && !firstReadingAfterWeek.isFirstReading) {
-            const consumption = firstReadingAfterWeek.reading - lastReadingBeforeWeek.reading;
-            if (consumption > 0) {
-              // Calculate the portion of consumption that belongs to this week
-              const totalDays = Math.ceil((new Date(firstReadingAfterWeek.date).getTime() - new Date(lastReadingBeforeWeek.date).getTime()) / (1000 * 60 * 60 * 24));
-              const weekDays = 7;
-              const weekPortion = Math.min(weekDays / totalDays, 1);
-              
-              weekKwh = consumption * weekPortion;
-              weekCost = weekKwh * preferences.unitRate;
-            }
-          }
-        }
-      } else if (sortedWeekReadings.length === 1) {
-        // If there's only one reading in the week, we need to find the previous reading to calculate consumption
-        const currentReading = sortedWeekReadings[0];
-        
-        // Find the last reading before this week
-        const previousReadings = monthReadings.filter(reading => {
-          const readingDate = new Date(reading.date);
-          return readingDate < actualWeekStart;
-        }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        
-        if (previousReadings.length > 0) {
-          const lastReadingBeforeWeek = previousReadings[0];
-          
-          // Only calculate if current reading is not a first reading
-          if (!currentReading.isFirstReading) {
-            const consumption = currentReading.reading - lastReadingBeforeWeek.reading;
-            if (consumption > 0) {
-              // Calculate the portion of consumption that belongs to this week
-              const totalDays = Math.ceil((new Date(currentReading.date).getTime() - new Date(lastReadingBeforeWeek.date).getTime()) / (1000 * 60 * 60 * 24));
-              const weekDays = Math.min(7, totalDays);
-              const weekPortion = weekDays / totalDays;
-              
-              weekKwh = consumption * weekPortion;
-              weekCost = weekKwh * preferences.unitRate;
-            }
-          }
-        }
-      }
+      weekTopups.forEach(topup => {
+        weekLitres += topup.litres;
+        weekCost += topup.totalCost;
+      });
 
       const weekData = {
         week: getWeekNumber(actualWeekStart),
         startDate: actualWeekStart,
         endDate: actualWeekEnd,
-        kwh: Math.round(weekKwh * 100) / 100,
+        litres: Math.round(weekLitres * 100) / 100,
         cost: Math.round(weekCost * 100) / 100,
         days: Math.min(7, Math.ceil((actualWeekEnd.getTime() - actualWeekStart.getTime()) / (1000 * 60 * 60 * 24)))
       };
-
 
       return weekData;
     });
@@ -171,8 +87,8 @@ export const MonthlyOverview: React.FC<MonthlyOverviewProps> = ({ currentMonth }
     const firstHalf = weeklyBreakdown.slice(0, Math.floor(weeklyBreakdown.length / 2));
     const secondHalf = weeklyBreakdown.slice(Math.floor(weeklyBreakdown.length / 2));
     
-    const firstHalfAvg = firstHalf.reduce((sum, week) => sum + week.kwh, 0) / firstHalf.length;
-    const secondHalfAvg = secondHalf.reduce((sum, week) => sum + week.kwh, 0) / secondHalf.length;
+    const firstHalfAvg = firstHalf.length > 0 ? firstHalf.reduce((sum, week) => sum + week.litres, 0) / firstHalf.length : 0;
+    const secondHalfAvg = secondHalf.length > 0 ? secondHalf.reduce((sum, week) => sum + week.litres, 0) / secondHalf.length : 0;
     
     const difference = secondHalfAvg - firstHalfAvg;
     const threshold = firstHalfAvg * 0.05;
@@ -182,14 +98,13 @@ export const MonthlyOverview: React.FC<MonthlyOverviewProps> = ({ currentMonth }
     else if (difference < -threshold) trend = 'decreasing';
 
     return {
-      totalKwh: Math.round(totalKwh * 100) / 100,
+      totalLitres: Math.round(totalLitres * 100) / 100,
       totalCost: Math.round(totalCost * 100) / 100,
-      averageDaily: Math.round((totalKwh / monthEnd.getDate()) * 100) / 100,
+      averageDaily: Math.round((totalLitres / monthEnd.getDate()) * 100) / 100,
       weeklyBreakdown,
       trend
     };
-  }, [readings, currentMonth, preferences.unitRate]);
-
+  }, [topups, currentMonth]);
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
@@ -227,7 +142,7 @@ export const MonthlyOverview: React.FC<MonthlyOverviewProps> = ({ currentMonth }
                   <Icon name="help-question-mark" className="h-4 w-4 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Monthly electricity consumption summary including estimated readings</p>
+                  <p>Monthly fuel consumption summary</p>
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -244,9 +159,9 @@ export const MonthlyOverview: React.FC<MonthlyOverviewProps> = ({ currentMonth }
         <div className="grid grid-cols-3 gap-3">
           <div className="text-center p-3 border border-dotted">
             <div className="text-xl  text-primary">
-              {monthlyData.totalKwh}
+              {monthlyData.totalLitres}
             </div>
-            <div className="text-xs text-muted-foreground mt-1">Total kWh</div>
+            <div className="text-xs text-muted-foreground mt-1">Total Litres</div>
           </div>
           <div className="text-center p-3 border border-dotted">
             <div className="text-xl  text-primary">
@@ -296,7 +211,7 @@ export const MonthlyOverview: React.FC<MonthlyOverviewProps> = ({ currentMonth }
                 </div>
                 <div className="text-right">
                   <div className="text-xs ">
-                    {week.kwh} kWh
+                    {week.litres} L
                   </div>
                   <div className="text-xs text-muted-foreground">
                     £{week.cost.toFixed(2)}

@@ -14,18 +14,18 @@ import { NotificationsLayout } from './components/notifications/NotificationsLay
 import { TariffLayout } from './components/tariff/TariffLayout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { useElectricityStore } from './store/useElectricityStore';
+import { useFuelStore } from './store/useFuelStore';
 import './index.css';
 
 function App() {
-  const { loadMeterReadings, setupRealtimeUpdates, cleanupRealtimeUpdates } = useElectricityStore();
+  const { loadFuelTopups, setupRealtimeUpdates, cleanupRealtimeUpdates } = useFuelStore();
 
   useEffect(() => {
     // Load initial data and set up real-time updates
     const initializeApp = async () => {
       try {
         console.log('Initializing app...');
-        await loadMeterReadings();
+        await loadFuelTopups();
         console.log('Data loaded, setting up real-time updates...');
         
         // Try to set up real-time updates, but don't fail if it doesn't work
@@ -63,7 +63,7 @@ function App() {
         console.warn('Error during cleanup:', error);
       }
     };
-  }, [loadMeterReadings, setupRealtimeUpdates, cleanupRealtimeUpdates]);
+  }, [loadFuelTopups, setupRealtimeUpdates, cleanupRealtimeUpdates]);
 
   // Wrapper component to provide required callbacks to login page
   const LoginRoute = () => {
@@ -76,7 +76,7 @@ function App() {
   };
 
   return (
-    <ThemeProvider defaultTheme="mono" storageKey="electricity-tracker-theme">
+    <ThemeProvider defaultTheme="mono" storageKey="fuel-tracker-theme">
       <ErrorBoundary>
         <Router>
           <div className="min-h-screen bg-background text-foreground">

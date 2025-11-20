@@ -1,5 +1,9 @@
 import { createContext, useContext } from 'react';
-import type { MeterReading, MeterReadingState } from '../types';
+import type { FuelTopup } from '../types';
+
+// Deprecated - use useFuelStore instead
+type MeterReading = FuelTopup;
+type MeterReadingState = any;
 
 export interface MeterReadingContextType extends MeterReadingState {
   addReading: (

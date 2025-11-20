@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Icon } from "@/components/ui/icon";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useElectricityStore } from '../../store/useElectricityStore';
+import { useFuelStore } from '../../store/useFuelStore';
 
 /**
  * UKAverageComparison Component
@@ -19,14 +19,14 @@ import { useElectricityStore } from '../../store/useElectricityStore';
  * Custom styling: Timezone-inspired design system
  */
 export const UKAverageComparison: React.FC = () => {
-  const { chartData, isLoading } = useElectricityStore();
+  const { chartData, isLoading } = useFuelStore();
 
   // UK average data (from Ofgem statistics)
-  const ukAverageDaily = 8.5; // kWh/day
+  const ukAverageDaily = 2.5; // litres/day
   const ukAverageCost = 2.55; // £/day
 
   // Calculate user averages from chart data
-  const totalConsumption = chartData.reduce((sum, point) => sum + point.kwh, 0);
+  const totalConsumption = chartData.reduce((sum, point) => sum + point.litres, 0);
   const totalCost = chartData.reduce((sum, point) => sum + point.cost, 0);
   const days = chartData.length > 0 ? chartData.length : 1;
   const userAverageDaily = totalConsumption / days;

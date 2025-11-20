@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Icon } from "@/components/ui/icon";
 import { HelpPopover } from '@/components/ui/help-popover';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useElectricityStore } from '../../store/useElectricityStore';
+import { useFuelStore } from '../../store/useFuelStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useNotificationStore } from '../../store/useNotificationStore';
 import { formatDistanceToNow } from 'date-fns';
@@ -33,7 +33,7 @@ export const MobileNavigation: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { toggleMeterPanel } = useElectricityStore();
+  const { toggleTopupPanel } = useFuelStore();
   const { user, logout, isAuthenticated } = useAuthStore();
   const { notifications, unreadCount, markAsRead, removeNotification } = useNotificationStore();
   
@@ -127,10 +127,10 @@ export const MobileNavigation: React.FC = () => {
             {/* Add Reading Button - Only on Dashboard */}
             {isDashboard && (
               <Button
-                onClick={() => toggleMeterPanel(true)}
+                onClick={() => toggleTopupPanel(true)}
                 size="sm"
                 className="h-9 px-3 flex items-center gap-1"
-                aria-label="Add meter reading"
+                aria-label="Add fuel topup"
               >
                 <Icon name="add-new-plus" className="h-4 w-4" />
                 <span className="hidden xs:inline">Add</span>
@@ -179,7 +179,7 @@ export const MobileNavigation: React.FC = () => {
                         <Icon name="bolt" className="h-5 w-5 text-primary-foreground" />
                       </div>
                       <div>
-                        <p className="text-sm font-normal">Electricity Tracker</p>
+                        <p className="text-sm font-normal">Fuel Tracker</p>
                         <p className="text-xs text-muted-foreground">Guest</p>
                       </div>
                     </div>
@@ -369,7 +369,7 @@ export const MobileNavigation: React.FC = () => {
                 {/* Footer */}
                 <div className="border-t p-4">
                   <div className="text-xs text-muted-foreground text-center">
-                    Electricity Tracker v1.0
+                    Fuel Tracker v1.0
                   </div>
                 </div>
               </div>

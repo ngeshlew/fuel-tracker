@@ -1,43 +1,52 @@
 // Simple test setup to verify core functionality
 // This file can be removed after testing
 
-import { MeterReading } from './types';
+import { FuelTopup } from './types';
 
 // Test data for verification
-export const testMeterReadings: Omit<MeterReading, 'id' | 'createdAt' | 'updatedAt'>[] = [
+export const testFuelTopups: Omit<FuelTopup, 'id' | 'createdAt' | 'updatedAt'>[] = [
   {
-    meterId: 'main',
-    reading: 12345.67,
+    vehicleId: 'vehicle-1',
+    litres: 45.5,
+    costPerLitre: 1.52,
+    totalCost: 69.16,
     date: new Date('2025-09-10'),
     type: 'MANUAL',
-    notes: 'Test reading 1',
+    fuelType: 'PETROL',
+    notes: 'Test topup 1',
   },
   {
-    meterId: 'main',
-    reading: 12378.45,
+    vehicleId: 'vehicle-1',
+    litres: 42.3,
+    costPerLitre: 1.50,
+    totalCost: 63.45,
     date: new Date('2025-09-11'),
     type: 'MANUAL',
-    notes: 'Test reading 2',
+    fuelType: 'PETROL',
+    notes: 'Test topup 2',
   },
   {
-    meterId: 'main',
-    reading: 12412.23,
+    vehicleId: 'vehicle-1',
+    litres: 48.7,
+    costPerLitre: 1.55,
+    totalCost: 75.49,
     date: new Date('2025-09-12'),
     type: 'MANUAL',
-    notes: 'Test reading 3',
+    fuelType: 'PETROL',
+    notes: 'Test topup 3',
   },
 ];
 
 // Test utility functions
 export const testUtils = {
-  // Calculate consumption between two readings
-  calculateConsumption: (current: number, previous: number): number => {
-    return Math.max(0, current - previous);
+  // Calculate consumption (litres added)
+  calculateConsumption: (litres: number): number => {
+    return litres;
   },
 
-  // Calculate cost based on consumption and unit rate
-  calculateCost: (consumption: number, unitRate: number = 0.30): number => {
-    return Math.round(consumption * unitRate * 100) / 100;
+  // Calculate cost based on litres and cost per litre
+  calculateCost: (litres: number, costPerLitre: number = 1.50): number => {
+    return Math.round(litres * costPerLitre * 100) / 100;
   },
 
   // Format date for display
@@ -49,13 +58,13 @@ export const testUtils = {
     });
   },
 
-  // Validate meter reading
-  validateReading: (reading: number): { isValid: boolean; error?: string } => {
-    if (reading < 0) {
-      return { isValid: false, error: 'Reading must be positive' };
+  // Validate fuel topup
+  validateTopup: (litres: number): { isValid: boolean; error?: string } => {
+    if (litres < 0) {
+      return { isValid: false, error: 'Litres must be positive' };
     }
-    if (reading > 999999) {
-      return { isValid: false, error: 'Reading must be less than 999,999' };
+    if (litres > 200) {
+      return { isValid: false, error: 'Litres must be less than 200' };
     }
     return { isValid: true };
   },
@@ -63,14 +72,14 @@ export const testUtils = {
 
 // Test the calculation functions
 export const runTests = () => {
-  console.log('🧪 Running Electricity Tracker Tests...');
+  console.log('🧪 Running Fuel Tracker Tests...');
 
   // Test consumption calculation
-  const consumption = testUtils.calculateConsumption(12412.23, 12345.67);
-  console.log(`✅ Consumption calculation: ${consumption} kWh`);
+  const consumption = testUtils.calculateConsumption(45.5);
+  console.log(`✅ Consumption calculation: ${consumption} L`);
 
   // Test cost calculation
-  const cost = testUtils.calculateCost(consumption);
+  const cost = testUtils.calculateCost(consumption, 1.52);
   console.log(`✅ Cost calculation: £${cost}`);
 
   // Test date formatting
@@ -78,11 +87,11 @@ export const runTests = () => {
   console.log(`✅ Date formatting: ${formattedDate}`);
 
   // Test validation
-  const validReading = testUtils.validateReading(12500);
-  console.log(`✅ Valid reading test: ${validReading.isValid}`);
+  const validTopup = testUtils.validateTopup(50);
+  console.log(`✅ Valid topup test: ${validTopup.isValid}`);
 
-  const invalidReading = testUtils.validateReading(-100);
-  console.log(`✅ Invalid reading test: ${invalidReading.isValid} - ${invalidReading.error}`);
+  const invalidTopup = testUtils.validateTopup(-10);
+  console.log(`✅ Invalid topup test: ${invalidTopup.isValid} - ${invalidTopup.error}`);
 
   console.log('🎉 All tests passed!');
 };

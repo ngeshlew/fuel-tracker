@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Icon } from '@/components/ui/icon';
-import { useElectricityStore } from '../../store/useElectricityStore';
+import { useFuelStore } from '../../store/useFuelStore';
 
 interface AIInsight {
   id: string;
@@ -18,7 +18,7 @@ interface AIInsight {
 }
 
 export const AIInsights: React.FC = () => {
-  const { chartData } = useElectricityStore();
+  const { chartData } = useFuelStore();
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -32,7 +32,7 @@ export const AIInsights: React.FC = () => {
       
       const recentData = chartData.slice(-30);
       const avgConsumption = recentData.length > 0 
-        ? recentData.reduce((sum, point) => sum + point.kwh, 0) / recentData.length 
+        ? recentData.reduce((sum, point) => sum + point.litres, 0) / recentData.length 
         : 0;
       
       const generatedInsights: AIInsight[] = [

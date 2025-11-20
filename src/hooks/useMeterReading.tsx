@@ -1,5 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import type { MeterReading, MeterReadingState } from '../types';
+import type { FuelTopup } from '../types';
+
+// Deprecated - use useFuelStore instead
+type MeterReading = FuelTopup;
+type MeterReadingState = any;
 import {
   MeterReadingContext,
   type MeterReadingContextType,

@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Icon } from "@/components/ui/icon";
-import { useElectricityStore } from '../../store/useElectricityStore';
+import { useFuelStore } from '../../store/useFuelStore';
 import { useTariffStore } from '../../store/useTariffStore';
 
 /**
@@ -19,7 +19,7 @@ import { useTariffStore } from '../../store/useTariffStore';
  * Custom styling: Timezone-inspired design system
  */
 export const AnnualProgressCards: React.FC = () => {
-  const { chartData, isLoading } = useElectricityStore();
+  const { chartData, isLoading } = useFuelStore();
   const { getAnnualTargets } = useTariffStore();
 
   // Filter chart data to only include current year (January 1st to today)
@@ -38,7 +38,7 @@ export const AnnualProgressCards: React.FC = () => {
   });
 
   // Calculate total consumption and cost from current year's chart data only
-  const totalConsumption = yearChartData.reduce((sum, point) => sum + point.kwh, 0);
+  const totalConsumption = yearChartData.reduce((sum, point) => sum + point.litres, 0);
   const totalCost = yearChartData.reduce((sum, point) => sum + point.cost, 0);
 
   // Get annual targets

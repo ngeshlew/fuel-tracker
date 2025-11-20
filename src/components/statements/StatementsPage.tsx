@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
-import { useElectricityStore } from '../../store/useElectricityStore';
+import { useFuelStore } from '../../store/useFuelStore';
 
 interface Statement {
   id: string;
@@ -24,7 +24,7 @@ interface Statement {
 }
 
 export const StatementsPage: React.FC = () => {
-  const { chartData } = useElectricityStore();
+  const { chartData } = useFuelStore();
   const [statements, setStatements] = useState<Statement[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -47,7 +47,7 @@ export const StatementsPage: React.FC = () => {
       }
       
       acc[monthKey].points.push(point);
-      acc[monthKey].totalConsumption += point.kwh;
+      acc[monthKey].totalConsumption += point.litres;
       acc[monthKey].totalCost += point.cost;
       
       return acc;
@@ -61,11 +61,11 @@ export const StatementsPage: React.FC = () => {
       
       // Find peak day
       const peakPoint = data.points.reduce((max, point) => 
-        point.kwh > max.kwh ? point : max
+        point.litres > max.litres ? point : max
       );
       
       // Calculate efficiency score (0-100)
-      const ukAverage = 8.5;
+      const ukAverage = 2.5; // Average litres per day for fuel
       const efficiencyScore = Math.max(0, Math.min(100, 100 - ((avgDailyConsumption - ukAverage) / ukAverage) * 100));
       
       return {
@@ -77,7 +77,7 @@ export const StatementsPage: React.FC = () => {
         averageDailyConsumption: avgDailyConsumption,
         averageDailyCost: avgDailyCost,
         peakDay: new Date(peakPoint.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
-        peakConsumption: peakPoint.kwh,
+        peakConsumption: peakPoint.litres,
         efficiencyScore,
         generatedAt: new Date(),
         status: 'final' as const
@@ -144,7 +144,7 @@ export const StatementsPage: React.FC = () => {
               Statements
             </h1>
             <p className="text-muted-foreground mt-2">
-              Generate, view, and manage your electricity consumption statements
+              Generate, view, and manage your fuel consumption statements
             </p>
           </div>
           <Button onClick={handleGenerateStatement} disabled={isGenerating}>
@@ -316,7 +316,7 @@ export const StatementsPage: React.FC = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <span className="text-muted-foreground">Total Consumption</span>
-                        <div className="font-semibold">{statement.totalConsumption.toFixed(1)} kWh</div>
+                        <div className="font-semibold">{statement.totalConsumption.toFixed(1)} L</div>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Total Cost</span>
@@ -324,7 +324,7 @@ export const StatementsPage: React.FC = () => {
                       </div>
                       <div>
                         <span className="text-muted-foreground">Peak Day</span>
-                        <div className="font-semibold">{statement.peakDay} ({statement.peakConsumption.toFixed(1)} kWh)</div>
+                        <div className="font-semibold">{statement.peakDay} ({statement.peakConsumption.toFixed(1)} L)</div>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Efficiency Score</span>

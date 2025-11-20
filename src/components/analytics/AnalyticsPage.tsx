@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Icon } from "@/components/ui/icon";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useElectricityStore } from '../../store/useElectricityStore';
+import { useFuelStore } from '../../store/useFuelStore';
 import { ConsumptionChart } from '../dashboard/ConsumptionChart';
 import { MonthlyOverview } from '../dashboard/MonthlyOverview';
 import { ConsumptionBreakdown } from '../dashboard/ConsumptionBreakdown';
@@ -13,7 +13,7 @@ import { SeasonalAnalytics } from './SeasonalAnalytics';
 import { TariffAnalytics } from './TariffAnalytics';
 
 export const AnalyticsPage: React.FC = () => {
-  const { chartData } = useElectricityStore();
+  const { chartData } = useFuelStore();
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
   const [selectedView, setSelectedView] = useState('consumption');
 
@@ -21,13 +21,13 @@ export const AnalyticsPage: React.FC = () => {
   const calculateAnalytics = () => {
     if (chartData.length === 0) return null;
 
-    const totalConsumption = chartData.reduce((sum, point) => sum + point.kwh, 0);
+    const totalConsumption = chartData.reduce((sum, point) => sum + point.litres, 0);
     const totalCost = chartData.reduce((sum, point) => sum + point.cost, 0);
     const avgDailyConsumption = totalConsumption / chartData.length;
     const avgDailyCost = totalCost / chartData.length;
 
     // UK average data
-    const ukAverageDaily = 8.5; // kWh
+    const ukAverageDaily = 2.5; // litres per day
     const ukAverageCost = 2.55; // £
     
     const efficiencyRatio = avgDailyConsumption / ukAverageDaily;
@@ -37,9 +37,9 @@ export const AnalyticsPage: React.FC = () => {
     const recentData = chartData.slice(-7);
     const olderData = chartData.slice(-14, -7);
     
-    const recentAvg = recentData.reduce((sum, point) => sum + point.kwh, 0) / recentData.length;
+    const recentAvg = recentData.reduce((sum, point) => sum + point.litres, 0) / recentData.length;
     const olderAvg = olderData.length > 0 
-      ? olderData.reduce((sum, point) => sum + point.kwh, 0) / olderData.length 
+      ? olderData.reduce((sum, point) => sum + point.litres, 0) / olderData.length 
       : recentAvg;
 
     const trendPercentage = olderAvg > 0 ? ((recentAvg - olderAvg) / olderAvg) * 100 : 0;

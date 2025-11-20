@@ -9,11 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
-import { useElectricityStore } from '../../store/useElectricityStore';
+import { useFuelStore } from '../../store/useFuelStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
 export const Settings: React.FC = () => {
-  const { clearCacheAndReload } = useElectricityStore();
+  const { clearCacheAndReload } = useFuelStore();
   const { 
     settings, 
     isLoading, 

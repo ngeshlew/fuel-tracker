@@ -9,24 +9,24 @@ import { ConsumptionBreakdown } from './ConsumptionBreakdown';
 import { AnnualProgressCards } from './AnnualProgressCards';
 import { SeasonalTracker } from './SeasonalTracker';
 import { MonthSelector } from './MonthSelector';
-import { MeterReadingPanel } from '../meter-reading/MeterReadingPanel';
-import { MeterReadingsLog } from '../meter-reading/MeterReadingsLog';
+import { FuelTopupPanel } from '../fuel-topup/FuelTopupPanel';
+import { FuelTopupsLog } from '../fuel-topup/FuelTopupsLog';
 import { MobileNavigation } from '../mobile/MobileNavigation';
-import { useElectricityStore } from '../../store/useElectricityStore';
+import { useFuelStore } from '../../store/useFuelStore';
 import { CurrentTariffInfo } from '../tariff/CurrentTariffInfo';
 import { TariffHistoryTable } from '../tariff/TariffHistoryTable';
 import { UKPriceComparison } from '../tariff/UKPriceComparison';
 import { TariffFormDialog } from '../tariff/TariffFormDialog';
 
 export const Dashboard: FC = () => {
-  const { isMeterPanelOpen, toggleMeterPanel, loadMeterReadings } = useElectricityStore();
+  const { isTopupPanelOpen, toggleTopupPanel, loadFuelTopups } = useFuelStore();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isTariffDialogOpen, setIsTariffDialogOpen] = useState(false);
 
-  // Load meter readings when component mounts
+  // Load fuel topups when component mounts
   useEffect(() => {
-    loadMeterReadings();
-  }, [loadMeterReadings]);
+    loadFuelTopups();
+  }, [loadFuelTopups]);
 
   return (
     <>
@@ -54,7 +54,7 @@ export const Dashboard: FC = () => {
                     <div>
                       <h1 className="text-2xl font-normal tracking-tight uppercase">Dashboard</h1>
                       <p className="text-muted-foreground mt-1 text-sm">
-                        Track your electricity usage
+                        Track your fuel consumption and costs
                       </p>
                     </div>
                     <MonthSelector
@@ -116,16 +116,16 @@ export const Dashboard: FC = () => {
                   </section>
                 </div>
 
-                {/* Recent Readings - Reduced spacing (2x less) */}
+                {/* Recent Topups - Reduced spacing (2x less) */}
                 <div className="mt-8" style={{ marginTop: 'var(--space-xl)' }}>
-                  <MeterReadingsLog />
+                  <FuelTopupsLog />
                 </div>
               </div>
             </div>
 
-            <MeterReadingPanel
-              isOpen={isMeterPanelOpen}
-              onClose={() => toggleMeterPanel(false)}
+            <FuelTopupPanel
+              isOpen={isTopupPanelOpen}
+              onClose={() => toggleTopupPanel(false)}
             />
             <TariffFormDialog
               open={isTariffDialogOpen}

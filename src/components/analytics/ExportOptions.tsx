@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
-import { useElectricityStore } from '../../store/useElectricityStore';
+import { useFuelStore } from '../../store/useFuelStore';
 
 interface ExportOptionsProps {
   className?: string;
 }
 
 export const ExportOptions: React.FC<ExportOptionsProps> = ({ className = '' }) => {
-  const { readings, chartData, timeSeriesData } = useElectricityStore();
+  const { topups, chartData, timeSeriesData } = useFuelStore();
   const [isExporting, setIsExporting] = useState(false);
 
   const exportToCSV = async (data: any[], filename: string) => {
@@ -78,7 +78,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({ className = '' }) 
         case 'chart':
           data = chartData.map(point => ({
             date: point.date,
-            kwh: point.kwh,
+            litres: point.litres,
             cost: point.cost,
             label: point.label || ''
           }));
@@ -88,7 +88,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({ className = '' }) 
         case 'analytics':
           data = timeSeriesData.map(point => ({
             period: point.period,
-            totalKwh: point.totalKwh,
+            totalLitres: point.totalLitres,
             totalCost: point.totalCost,
             averageDaily: point.averageDaily,
             trend: point.trend

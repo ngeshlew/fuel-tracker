@@ -6,16 +6,20 @@ import { socketService } from '../services/socketService';
 import { useTariffStore } from './useTariffStore';
 import { useToastStore } from './useToastStore';
 import type { 
-  MeterReading, 
+  FuelTopup, 
   ChartDataPoint, 
   TimeSeriesData,
   PieChartData,
   UserPreferences 
 } from '../types';
 
+// Deprecated - use useFuelStore instead
+// Type alias for backward compatibility
+type MeterReading = FuelTopup;
+
 interface ElectricityState {
-  // Meter readings
-  readings: MeterReading[];
+  // Meter readings (deprecated - use useFuelStore instead)
+  readings: FuelTopup[];
   isLoading: boolean;
   error: string | null;
   
@@ -30,9 +34,9 @@ interface ElectricityState {
   chartData: ChartDataPoint[];
   pieChartData: PieChartData[];
   
-  // Actions
-  addReading: (reading: Omit<MeterReading, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
-  updateReading: (id: string, reading: Partial<MeterReading>) => Promise<void>;
+  // Actions (deprecated - use useFuelStore instead)
+  addReading: (reading: Omit<FuelTopup, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateReading: (id: string, reading: Partial<FuelTopup>) => Promise<void>;
   deleteReading: (id: string) => Promise<void>;
   toggleMeterPanel: (isOpen: boolean) => void;
   toggleFirstReading: (id: string) => Promise<void>;
@@ -53,8 +57,8 @@ interface ElectricityState {
   calculateTimeSeriesData: (period: 'daily' | 'weekly' | 'monthly') => void;
   calculatePieChartData: () => void;
   
-  // Utility functions
-  getConsumptionBetweenReadings: (reading1: MeterReading, reading2: MeterReading) => number;
+  // Utility functions (deprecated - use useFuelStore instead)
+  getConsumptionBetweenReadings: (reading1: FuelTopup, reading2: FuelTopup) => number;
   calculateCost: (kwh: number, date?: Date, includeStandingCharge?: boolean) => number;
   calculateReadingCost: (kwh: number, date?: Date) => number;
   getTrend: (data: ChartDataPoint[]) => 'increasing' | 'decreasing' | 'stable';
@@ -66,8 +70,9 @@ const defaultPreferences: UserPreferences = {
   userId: 'default-user',
   theme: 'dark',
   currency: 'GBP',
-  unitRate: 0.30, // £0.30 per kWh
-  standingCharge: 0.50, // £0.50 per day
+  // Deprecated - fuel tracking doesn't use unitRate/standingCharge
+  // unitRate: 0.30, // £0.30 per kWh
+  // standingCharge: 0.50, // £0.50 per day
   notifications: true,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -87,28 +92,29 @@ export const useElectricityStore = create<ElectricityState>()(
         chartData: [],
         pieChartData: [],
 
-        // Meter reading actions
+        // Fuel topup actions
         addReading: async (readingData) => {
           set({ isLoading: true, error: null });
           
-          // Check for duplicate readings
-          const { readings } = get();
-          const isDuplicate = readings.some(reading => 
-            reading.meterId === readingData.meterId &&
-            reading.date.toDateString() === readingData.date.toDateString() &&
-            Math.abs(reading.reading - readingData.reading) < 0.01 // Allow 0.01 kWh tolerance
+          // Check for duplicate topups
+          const { readings: topups } = get();
+          // For fuel, duplicate check is based on vehicleId and date
+          const isDuplicate = topups.some(topup => 
+            topup.vehicleId === (readingData as any).vehicleId &&
+            topup.date.toDateString() === readingData.date.toDateString() &&
+            Math.abs(topup.litres - ((readingData as any).litres || 0)) < 0.01 // Allow 0.01 L tolerance
           );
           
           if (isDuplicate) {
             set({ 
               isLoading: false, 
-              error: 'A reading for this meter on this date already exists. Please check the readings log or use a different date.' 
+              error: 'A topup for this vehicle on this date already exists. Please check the topups log or use a different date.' 
             });
             return;
           }
           
           try {
-            const response = await apiService.createMeterReading({
+            const response = await apiService.createFuelTopup({
               ...readingData,
               date: readingData.date.toISOString(),
             });
@@ -117,7 +123,7 @@ export const useElectricityStore = create<ElectricityState>()(
               throw new Error(response.error?.message || 'Failed to create reading');
             }
 
-            const newReading: MeterReading = {
+            const newReading: FuelTopup = {
               ...response.data,
               date: new Date(response.data.date),
               createdAt: new Date(response.data.createdAt),
@@ -148,7 +154,7 @@ export const useElectricityStore = create<ElectricityState>()(
             // Fallback: Create reading locally if API fails
             console.warn('API failed, creating reading locally:', error);
             
-            const newReading: MeterReading = {
+            const newReading: FuelTopup = {
               id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               ...readingData,
               date: readingData.date,
@@ -180,7 +186,7 @@ export const useElectricityStore = create<ElectricityState>()(
           set({ isLoading: true, error: null });
           
           try {
-            const response = await apiService.updateMeterReading(id, {
+            const response = await apiService.updateFuelTopup(id, {
               ...readingData,
               date: readingData.date ? readingData.date.toISOString() : undefined,
               createdAt: readingData.createdAt ? readingData.createdAt.toISOString() : undefined,
@@ -191,7 +197,7 @@ export const useElectricityStore = create<ElectricityState>()(
               throw new Error(response.error?.message || 'Failed to update reading');
             }
 
-            const updatedReading: MeterReading = {
+            const updatedReading: FuelTopup = {
               ...response.data,
               date: new Date(response.data.date),
               createdAt: new Date(response.data.createdAt),
@@ -224,7 +230,7 @@ export const useElectricityStore = create<ElectricityState>()(
           set({ isLoading: true, error: null });
           
           try {
-            const response = await apiService.deleteMeterReading(id);
+            const response = await apiService.deleteFuelTopup(id);
 
             if (!response.success) {
               throw new Error(response.error?.message || 'Failed to delete reading');
@@ -246,7 +252,7 @@ export const useElectricityStore = create<ElectricityState>()(
               isLoading: false,
               error: error instanceof Error ? error.message : 'Failed to delete reading',
             });
-            useToastStore.getState().showToast('Failed to delete reading', 'error');
+            useToastStore.getState().showToast('Failed to delete topup', 'error');
           }
         },
 
@@ -254,27 +260,27 @@ export const useElectricityStore = create<ElectricityState>()(
           set({ isLoading: true, error: null });
           
           try {
-            const { readings } = get();
-            const reading = readings.find(r => r.id === id);
-            if (!reading) throw new Error('Reading not found');
+            const { readings: topups } = get();
+            const topup = topups.find(r => r.id === id);
+            if (!topup) throw new Error('Topup not found');
 
-            const newIsFirstReading = !reading.isFirstReading;
+            const newIsFirstTopup = !topup.isFirstTopup;
             
-            // If setting as first reading, unset any other first readings
-            if (newIsFirstReading) {
-              const otherFirstReadings = readings.filter(r => r.id !== id && r.isFirstReading);
-              for (const otherReading of otherFirstReadings) {
-                await apiService.updateMeterReading(otherReading.id, { isFirstReading: false });
+            // If setting as first topup, unset any other first topups
+            if (newIsFirstTopup) {
+              const otherFirstTopups = topups.filter(r => r.id !== id && r.isFirstTopup);
+              for (const otherTopup of otherFirstTopups) {
+                await apiService.updateFuelTopup(otherTopup.id, { isFirstTopup: false });
               }
             }
 
-            const response = await apiService.updateMeterReading(id, { isFirstReading: newIsFirstReading });
+            const response = await apiService.updateFuelTopup(id, { isFirstTopup: newIsFirstTopup });
 
             if (!response.success || !response.data) {
-              throw new Error(response.error?.message || 'Failed to update reading');
+              throw new Error(response.error?.message || 'Failed to update topup');
             }
 
-            const updatedReading: MeterReading = {
+            const updatedTopup: FuelTopup = {
               ...response.data,
               date: new Date(response.data.date),
               createdAt: new Date(response.data.createdAt),
@@ -283,7 +289,7 @@ export const useElectricityStore = create<ElectricityState>()(
 
             set((state) => ({
               readings: state.readings.map((r) =>
-                r.id === id ? updatedReading : r
+                r.id === id ? updatedTopup : r
               ).sort((a, b) => 
                 new Date(a.date).getTime() - new Date(b.date).getTime()
               ),
@@ -327,7 +333,7 @@ export const useElectricityStore = create<ElectricityState>()(
             );
             const manualDateStrings = new Set(sortedManualReadings.map(r => new Date(r.date).toDateString()));
 
-            const estimatedReadings: MeterReading[] = [];
+            const estimatedReadings: FuelTopup[] = [];
 
             // Generate estimated readings between consecutive manual readings
             for (let i = 0; i < sortedManualReadings.length - 1; i++) {
@@ -346,32 +352,33 @@ export const useElectricityStore = create<ElectricityState>()(
                 continue; // No gap to fill
               }
               
-              // Calculate consumption between readings
-              const consumption = nextReading.reading - currentReading.reading;
-              const dailyAverage = consumption / daysDiff;
-              
-              // Generate estimated readings for each missing day
-              let currentReadingValue = currentReading.reading;
+              // For fuel, consumption is litres added (not a delta)
+              // Generate estimated topups for each missing day based on average
+              const avgLitresPerDay = (nextReading.litres + currentReading.litres) / (daysDiff + 1);
               const currentDateToFill = new Date(currentDate);
               currentDateToFill.setDate(currentDateToFill.getDate() + 1);
               
               while (currentDateToFill < nextDate) {
-                currentReadingValue += dailyAverage;
+                // For fuel, use average litres per day (not cumulative)
+                const dailyLitres = avgLitresPerDay;
                 
-                const estimatedReading: MeterReading = {
+                const estimatedTopup: FuelTopup = {
                   id: `est-${currentDateToFill.getTime()}-${Math.random().toString(36).substr(2, 9)}`,
-                  meterId: currentReading.meterId,
-                  reading: Math.round(currentReadingValue * 100) / 100,
+                  vehicleId: currentReading.vehicleId,
+                  litres: Math.round(dailyLitres * 100) / 100,
+                  costPerLitre: currentReading.costPerLitre,
+                  totalCost: Math.round(dailyLitres * currentReading.costPerLitre * 100) / 100,
                   date: new Date(currentDateToFill),
                   type: 'ESTIMATED' as const,
-                  notes: `Estimated reading based on consumption between ${currentDate.toLocaleDateString('en-GB')} and ${nextDate.toLocaleDateString('en-GB')}`,
-                  isFirstReading: false,
+                  fuelType: currentReading.fuelType,
+                  notes: `Estimated topup based on average between ${currentDate.toLocaleDateString('en-GB')} and ${nextDate.toLocaleDateString('en-GB')}`,
+                  isFirstTopup: false,
                   createdAt: new Date(),
                   updatedAt: new Date(),
                 };
                 
                 if (!manualDateStrings.has(currentDateToFill.toDateString())) {
-                  estimatedReadings.push(estimatedReading);
+                  estimatedReadings.push(estimatedTopup);
                 }
                 currentDateToFill.setDate(currentDateToFill.getDate() + 1);
               }
@@ -386,8 +393,8 @@ export const useElectricityStore = create<ElectricityState>()(
               const lastIntervalDays = Math.ceil(
                 (new Date(lastReading.date).getTime() - new Date(secondLastReading.date).getTime()) / (1000 * 60 * 60 * 24)
               );
-              const lastIntervalConsumption = lastReading.reading - secondLastReading.reading;
-              const dailyAverage = lastIntervalConsumption / lastIntervalDays;
+              // For fuel, use average litres per day
+              const avgLitresPerDay = (lastReading.litres + secondLastReading.litres) / (lastIntervalDays + 1);
               
               // Get yesterday in UK timezone
               const ukNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/London' }));
@@ -399,27 +406,29 @@ export const useElectricityStore = create<ElectricityState>()(
               lastReadingDate.setHours(0, 0, 0, 0);
               
               // Generate estimates from day after last reading to yesterday
-              let currentReadingValue = lastReading.reading;
               const currentDateToFill = new Date(lastReadingDate);
               currentDateToFill.setDate(currentDateToFill.getDate() + 1);
               
               while (currentDateToFill <= yesterday) {
-                currentReadingValue += dailyAverage;
-                
-                const estimatedReading: MeterReading = {
+                // For fuel, use average litres per day
+                const dailyLitres = avgLitresPerDay;
+                const estimatedTopup: FuelTopup = {
                   id: `est-${currentDateToFill.getTime()}-${Math.random().toString(36).substr(2, 9)}`,
-                  meterId: lastReading.meterId,
-                  reading: Math.round(currentReadingValue * 100) / 100,
+                  vehicleId: lastReading.vehicleId,
+                  litres: Math.round((dailyLitres || avgLitresPerDay) * 100) / 100,
+                  costPerLitre: lastReading.costPerLitre,
+                  totalCost: Math.round((dailyLitres || avgLitresPerDay) * lastReading.costPerLitre * 100) / 100,
                   date: new Date(currentDateToFill),
                   type: 'ESTIMATED' as const,
-                  notes: `Estimated reading based on average daily consumption (${dailyAverage.toFixed(2)} kWh/day)`,
-                  isFirstReading: false,
+                  fuelType: lastReading.fuelType,
+                  notes: `Estimated topup based on average daily consumption (${avgLitresPerDay.toFixed(2)} L/day)`,
+                  isFirstTopup: false,
                   createdAt: new Date(),
                   updatedAt: new Date(),
                 };
                 
                 if (!manualDateStrings.has(currentDateToFill.toDateString())) {
-                  estimatedReadings.push(estimatedReading);
+                  estimatedReadings.push(estimatedTopup);
                 }
                 currentDateToFill.setDate(currentDateToFill.getDate() + 1);
               }
@@ -535,18 +544,18 @@ export const useElectricityStore = create<ElectricityState>()(
 
         // Data loading actions
         loadMeterReadings: async () => {
-          console.log('Loading meter readings...');
+          console.log('Loading fuel topups...');
           set({ isLoading: true, error: null });
           
           try {
-            const response = await apiService.getMeterReadings();
+            const response = await apiService.getFuelTopups();
             console.log('API response:', response);
 
             if (!response.success || !response.data) {
-              throw new Error(response.error?.message || 'Failed to load meter readings');
+              throw new Error(response.error?.message || 'Failed to load fuel topups');
             }
 
-            const readings: MeterReading[] = response.data.map(reading => ({
+            const readings: FuelTopup[] = response.data.map(reading => ({
               ...reading,
               date: new Date(reading.date),
               createdAt: new Date(reading.createdAt),
@@ -557,31 +566,31 @@ export const useElectricityStore = create<ElectricityState>()(
               new Date(a.date).getTime() - new Date(b.date).getTime()
             );
             
-            console.log('Setting readings in store:', sortedReadings.length);
+            console.log('Setting topups in store:', sortedReadings.length);
             set({
               readings: sortedReadings,
               isLoading: false,
               error: null,
             });
 
-            // Regenerate estimated readings to ensure continuity
+            // Regenerate estimated topups to ensure continuity
             await get().generateEstimatedReadings();
             
-            // Always recalculate analytics data after loading readings
+            // Always recalculate analytics data after loading topups
             get().calculateConsumptionData();
             get().calculateTimeSeriesData('daily');
             get().calculatePieChartData();
           } catch (error) {
             set({
               isLoading: false,
-              error: error instanceof Error ? error.message : 'Failed to load meter readings',
+              error: error instanceof Error ? error.message : 'Failed to load fuel topups',
             });
           }
         },
 
         clearCacheAndReload: async () => {
           console.log('Clearing cache and reloading data...');
-          // Clear the current readings to force fresh data load
+          // Clear the current topups to force fresh data load
           set({ readings: [], chartData: [], timeSeriesData: [], pieChartData: [] });
           // Load fresh data from API
           await get().loadMeterReadings();
@@ -597,8 +606,8 @@ export const useElectricityStore = create<ElectricityState>()(
             return;
           }
 
-          const onAdded = (reading: MeterReading) => {
-            const newReading: MeterReading = {
+          const onAdded = (reading: FuelTopup) => {
+            const newReading: FuelTopup = {
               ...reading,
               date: new Date(reading.date),
               createdAt: new Date(reading.createdAt),
@@ -623,8 +632,8 @@ export const useElectricityStore = create<ElectricityState>()(
             get().calculatePieChartData();
           };
 
-          const onUpdated = (reading: MeterReading) => {
-            const updatedReading: MeterReading = {
+          const onUpdated = (reading: FuelTopup) => {
+            const updatedReading: FuelTopup = {
               ...reading,
               date: new Date(reading.date),
               createdAt: new Date(reading.createdAt),
@@ -645,7 +654,7 @@ export const useElectricityStore = create<ElectricityState>()(
 
           const onDeleted = ({ id }: { id: string }) => {
             set((state) => ({
-              readings: state.readings.filter((reading) => reading.id !== id),
+              readings: state.readings.filter((topup) => topup.id !== id),
             }));
 
             // Recalculate analytics data
@@ -654,36 +663,36 @@ export const useElectricityStore = create<ElectricityState>()(
             get().calculatePieChartData();
           };
 
-           socketService.onMeterReadingAdded((reading) => {
-             const meterReading: MeterReading = {
-               ...reading,
-               date: new Date(reading.date),
-               createdAt: new Date(reading.createdAt),
-               updatedAt: new Date(reading.updatedAt),
+           socketService.onFuelTopupAdded((topup) => {
+             const fuelTopup: FuelTopup = {
+               ...topup,
+               date: new Date(topup.date),
+               createdAt: new Date(topup.createdAt),
+               updatedAt: new Date(topup.updatedAt),
              };
-             onAdded(meterReading);
+             onAdded(fuelTopup);
            });
-           socketService.onMeterReadingUpdated((reading) => {
-             const meterReading: MeterReading = {
-               ...reading,
-               date: new Date(reading.date),
-               createdAt: new Date(reading.createdAt),
-               updatedAt: new Date(reading.updatedAt),
+           socketService.onFuelTopupUpdated((topup) => {
+             const fuelTopup: FuelTopup = {
+               ...topup,
+               date: new Date(topup.date),
+               createdAt: new Date(topup.createdAt),
+               updatedAt: new Date(topup.updatedAt),
              };
-             onUpdated(meterReading);
+             onUpdated(fuelTopup);
            });
-          socketService.onMeterReadingDeleted(onDeleted);
+          socketService.onFuelTopupDeleted(onDeleted);
 
-          (window as any).__elecHandlers = { onAdded, onUpdated, onDeleted };
+          (window as any).__fuelHandlers = { onAdded, onUpdated, onDeleted };
         },
 
         cleanupRealtimeUpdates: () => {
-          const handlers = (window as any).__elecHandlers;
+          const handlers = (window as any).__fuelHandlers;
           if (handlers) {
-            socketService.offMeterReadingAdded(handlers.onAdded);
-            socketService.offMeterReadingUpdated(handlers.onUpdated);
-            socketService.offMeterReadingDeleted(handlers.onDeleted);
-            delete (window as any).__elecHandlers;
+            socketService.offFuelTopupAdded(handlers.onAdded);
+            socketService.offFuelTopupUpdated(handlers.onUpdated);
+            socketService.offFuelTopupDeleted(handlers.onDeleted);
+            delete (window as any).__fuelHandlers;
           }
           socketService.disconnect();
         },
@@ -700,13 +709,13 @@ export const useElectricityStore = create<ElectricityState>()(
           
           if (readings.length === 1) {
             const singleReading = readings[0];
-            if (singleReading.isFirstReading) {
+            if (singleReading.isFirstTopup) {
               set({ 
                 chartData: [{
                   date: singleReading.date.toISOString().split('T')[0],
-                  kwh: 0,
+                  litres: 0,
                   cost: 0,
-                  label: '0.00 kWh',
+                  label: '0.00 L',
                 }]
               });
             } else {
@@ -733,12 +742,12 @@ export const useElectricityStore = create<ElectricityState>()(
           // Handle first reading - show 0 consumption on the first day
           const firstReading = sortedReadings[0];
           
-          if (firstReading && firstReading.isFirstReading) {
+          if (firstReading && firstReading.isFirstTopup) {
             chartData.push({
               date: firstReading.date.toISOString().split('T')[0],
-              kwh: 0,
+              litres: 0,
               cost: 0,
-              label: '0.00 kWh',
+              label: '0.00 L',
             });
           }
           
@@ -756,8 +765,8 @@ export const useElectricityStore = create<ElectricityState>()(
               continue;
             }
             
-            // Skip if current reading is marked as first reading (already handled above)
-            if (currentReading.isFirstReading) {
+            // Skip if current reading is marked as first topup (already handled above)
+            if (currentReading.isFirstTopup) {
               continue;
             }
             
@@ -771,9 +780,9 @@ export const useElectricityStore = create<ElectricityState>()(
             if (consumption < 0 && process.env.NODE_ENV === 'development') {
               console.warn(
                 `Negative consumption detected between readings:`,
-                `Previous: ${prevReading.date.toISOString().split('T')[0]} (${prevReading.reading} kWh),`,
-                `Current: ${currentReading.date.toISOString().split('T')[0]} (${currentReading.reading} kWh),`,
-                `Consumption: ${consumption.toFixed(2)} kWh.`,
+                `Previous: ${prevReading.date.toISOString().split('T')[0]} (${prevReading.litres} L),`,
+                `Current: ${currentReading.date.toISOString().split('T')[0]} (${currentReading.litres} L),`,
+                `Consumption: ${consumption.toFixed(2)} L.`,
                 `This may indicate a meter reset or data error.`
               );
             }
@@ -784,9 +793,9 @@ export const useElectricityStore = create<ElectricityState>()(
             // This includes estimated readings, ensuring they appear in charts
             chartData.push({
               date: currentReading.date.toISOString().split('T')[0],
-              kwh: validConsumption,
+              litres: validConsumption,
               cost: cost,
-              label: `${validConsumption.toFixed(2)} kWh`,
+              label: `${validConsumption.toFixed(2)} L`,
             });
           }
 
@@ -835,15 +844,15 @@ export const useElectricityStore = create<ElectricityState>()(
           });
 
           const timeSeriesData: TimeSeriesData[] = Array.from(groupedData.entries()).map(([period, data]) => {
-            const totalKwh = data.reduce((sum, point) => sum + point.kwh, 0);
+            const totalLitres = data.reduce((sum, point) => sum + point.litres, 0);
             const totalCost = data.reduce((sum, point) => sum + point.cost, 0);
-            const averageDaily = totalKwh / data.length;
+            const averageDaily = totalLitres / data.length;
             const trend = get().getTrend(data);
 
             return {
               period,
               data,
-              totalKwh,
+              totalLitres,
               totalCost,
               averageDaily,
               trend,
@@ -873,22 +882,26 @@ export const useElectricityStore = create<ElectricityState>()(
         },
 
         // Utility functions
-        getConsumptionBetweenReadings: (reading1, reading2) => {
-          // Skip consumption calculation if reading2 is marked as first reading
-          if (reading2.isFirstReading) {
+        getConsumptionBetweenReadings: (reading1: FuelTopup, reading2: FuelTopup) => {
+          // For fuel, consumption is simply the litres added in the topup
+          // Skip if reading2 is marked as first reading
+          if (reading2.isFirstTopup) {
             return 0;
           }
-          const consumption = new Decimal(reading2.reading).minus(reading1.reading);
-          return consumption.toNumber();
+          // Return the litres added in this topup
+          return reading2.litres;
         },
 
-        calculateCost: (kwh, date?: Date, includeStandingCharge: boolean = false) => {
+        calculateCost: (litres, date?: Date, includeStandingCharge: boolean = false) => {
+          // Deprecated: For fuel tracking, cost is already calculated (litres * costPerLitre)
+          // This function is kept for backward compatibility but returns 0 for fuel
           const tariffStore = useTariffStore.getState();
           const tariff = tariffStore.getTariffForDate(date || new Date());
           
           if (tariff) {
-            // Calculate cost using tariff: kwh * unitRate (convert pence to pounds)
-            const unitCost = new Decimal(kwh).times(tariff.unitRate).dividedBy(100);
+            // Calculate cost using tariff: litres * unitRate (convert pence to pounds)
+            // Note: This is legacy code for electricity tracking
+            const unitCost = new Decimal(litres).times(tariff.unitRate).dividedBy(100);
             
             // Only add standing charge if explicitly requested (for total bills, not individual readings)
             if (includeStandingCharge) {
@@ -899,45 +912,15 @@ export const useElectricityStore = create<ElectricityState>()(
             return unitCost.toNumber();
           }
           
-          // Fallback to preferences if no tariff found (values already stored in pounds)
-          const { preferences } = get();
-          const unitCost = new Decimal(kwh).times(preferences.unitRate);
-          
-          if (includeStandingCharge) {
-            const standingCost = new Decimal(preferences.standingCharge || 0);
-            return unitCost.plus(standingCost).toNumber();
-          }
-          
-          return unitCost.toNumber();
+          // Fallback: For fuel, cost is already calculated (litres * costPerLitre)
+          // This function is deprecated for fuel tracking
+          return 0;
         },
 
-        calculateReadingCost: (kwh, date?: Date) => {
-          // Calculate cost for a meter reading including standing charge and VAT
-          // Formula: ((consumption * unitRate / 100) + (1 day * standingCharge / 100)) * 1.05 (VAT)
-          const tariffStore = useTariffStore.getState();
-          const tariff = tariffStore.getTariffForDate(date || new Date());
-          
-          if (tariff) {
-            // Unit cost: consumption * unitRate (convert pence to pounds)
-            const unitCost = new Decimal(kwh).times(tariff.unitRate).dividedBy(100);
-            
-            // Standing charge: 1 day * standingCharge (convert pence to pounds)
-            const standingCost = new Decimal(tariff.standingCharge).dividedBy(100);
-            
-            // Total before VAT
-            const totalBeforeVAT = unitCost.plus(standingCost);
-            
-            // Apply VAT (5% = multiply by 1.05)
-            const totalWithVAT = totalBeforeVAT.times(1.05);
-            
-            return totalWithVAT.toNumber();
-          }
-          
-          // Fallback to preferences if no tariff found (values already stored in pounds)
-          const { preferences } = get();
-          const unitCost = new Decimal(kwh).times(preferences.unitRate);
-          const standingCost = new Decimal(preferences.standingCharge || 0);
-          return unitCost.plus(standingCost).times(1.05).toNumber();
+        calculateReadingCost: (litres, date?: Date) => {
+          // For fuel, cost is already calculated (litres * costPerLitre)
+          // This function is deprecated for fuel tracking
+          return 0;
         },
 
         recalculateCosts: () => {
@@ -953,8 +936,8 @@ export const useElectricityStore = create<ElectricityState>()(
           const firstHalf = data.slice(0, Math.floor(data.length / 2));
           const secondHalf = data.slice(Math.floor(data.length / 2));
           
-          const firstAvg = firstHalf.reduce((sum, point) => sum + point.kwh, 0) / firstHalf.length;
-          const secondAvg = secondHalf.reduce((sum, point) => sum + point.kwh, 0) / secondHalf.length;
+          const firstAvg = firstHalf.reduce((sum, point) => sum + point.litres, 0) / firstHalf.length;
+          const secondAvg = secondHalf.reduce((sum, point) => sum + point.litres, 0) / secondHalf.length;
           
           const difference = secondAvg - firstAvg;
           const threshold = firstAvg * 0.05; // 5% threshold
