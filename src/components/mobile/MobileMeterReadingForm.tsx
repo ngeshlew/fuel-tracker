@@ -48,7 +48,7 @@ export const MobileMeterReadingForm: React.FC<MobileMeterReadingFormProps> = ({
     
     if (!lastReading) return 0;
     
-    const consumption = reading - lastReading.reading;
+    const consumption = reading - lastReading.litres;
     if (consumption <= 0) return 0;
     
     // Calculate cost based on current tariff
@@ -66,8 +66,10 @@ export const MobileMeterReadingForm: React.FC<MobileMeterReadingFormProps> = ({
     setIsSubmitting(true);
     try {
       await addReading({
-        meterId: 'default',
-        reading: Number(formData.reading),
+        vehicleId: 'default',
+        litres: Number(formData.reading),
+        costPerLitre: 0,
+        totalCost: 0,
         date: formData.date,
         type: formData.type,
         notes: formData.notes || undefined

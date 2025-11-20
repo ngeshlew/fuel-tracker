@@ -86,13 +86,13 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({ onSuccess })
     
     // Sort readings by date (most recent first)
     const sortedReadings = [...readings]
-      .filter(r => !r.isFirstReading && r.type !== 'ESTIMATED')
+      .filter(r => !r.isFirstTopup && r.type !== 'ESTIMATED')
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
     if (sortedReadings.length === 0) return { previousReading: 0, estimate: 0 };
     
     const lastReading = sortedReadings[0];
-    const previousReading = lastReading.reading;
+    const previousReading = lastReading.litres;
     
     // Calculate estimate based on average daily consumption
     let estimate = previousReading;
@@ -102,7 +102,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({ onSuccess })
         (new Date(lastReading.date).getTime() - new Date(secondLastReading.date).getTime()) / (1000 * 60 * 60 * 24)
       );
       if (daysDiff > 0) {
-        const consumption = lastReading.reading - secondLastReading.reading;
+        const consumption = lastReading.litres - secondLastReading.litres;
         const dailyAverage = consumption / daysDiff;
         // Estimate for today (1 day since last reading)
         estimate = previousReading + dailyAverage;
@@ -130,7 +130,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({ onSuccess })
 
   // Check if there's already a first reading in the system
   useEffect(() => {
-    const hasFirstReading = readings.some(reading => reading.isFirstReading);
+    const hasFirstReading = readings.some(reading => reading.isFirstTopup);
     setShowFirstReadingCheckbox(!hasFirstReading);
   }, [readings]);
 
@@ -147,8 +147,10 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({ onSuccess })
   const onSubmit = async (data: MeterReadingFormData) => {
     try {
       await addReading({
-        meterId: 'default-meter',
-        reading: data.reading,
+        vehicleId: 'default-vehicle',
+        litres: data.reading,
+        costPerLitre: 0,
+        totalCost: 0,
         date: data.date,
         type: 'MANUAL',
         notes: data.notes || '',

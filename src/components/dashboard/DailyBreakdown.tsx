@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Icon } from "@/components/ui/icon";
 import { useFuelStore } from '../../store/useFuelStore';
 import { startOfMonth, endOfMonth, eachDayOfInterval, format } from 'date-fns';
 

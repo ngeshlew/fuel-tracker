@@ -76,7 +76,7 @@ export const buildDailyConsumptionSeries = (
 
     // Calculate efficiency if mileage is tracked
     let efficiency: number | undefined = undefined;
-    if (i > 0 && current.mileage && normalizedTopups[i - 1].mileage) {
+    if (i > 0 && current.mileage && normalizedTopups[i - 1]?.mileage) {
       const milesDriven = current.mileage - normalizedTopups[i - 1].mileage;
       if (milesDriven > 0 && current.litres > 0) {
         efficiency = milesDriven / current.litres; // Miles per litre

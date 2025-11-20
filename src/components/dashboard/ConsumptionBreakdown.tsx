@@ -95,7 +95,6 @@ export const ConsumptionBreakdown: React.FC<ConsumptionBreakdownProps> = ({ curr
     }
 
     // Create daily data points
-    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
     const dailyBreakdown: DailyData[] = [];
 
     // Group topups by day

@@ -200,7 +200,7 @@ export const AIInsights: React.FC = () => {
   };
 
   // Analyze consumption patterns
-  const analyzePatterns = (topups: any[], chartData: any[]): ConsumptionPattern => {
+  const analyzePatterns = (_topups: any[], chartData: any[]): ConsumptionPattern => {
     const totalConsumption = chartData.reduce((sum, point) => sum + (point.litres || 0), 0);
     const days = chartData.length;
     const avgDailyUsage = totalConsumption / days;

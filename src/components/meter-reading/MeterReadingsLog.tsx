@@ -129,11 +129,11 @@ export const MeterReadingsLog: React.FC<MeterReadingsLogProps> = ({
 
   const calculateConsumption = (current: MeterReading, next?: MeterReading, allReadings?: MeterReading[]) => {
     // Skip consumption calculation if the current reading is marked as first reading
-    if (current.isFirstReading) return 0;
+    if (current.isFirstTopup) return 0;
     
     // If next reading is provided and in the same month group, use it
     if (next) {
-      return Math.max(0, Number(current.reading) - Number(next.reading));
+      return Math.max(0, Number(current.litres) - Number(next.litres));
     }
     
     // If no next reading in same month, look for the previous reading across all readings
@@ -143,13 +143,13 @@ export const MeterReadingsLog: React.FC<MeterReadingsLogProps> = ({
       const previousReadings = allReadings
         .filter(r => {
           const rDate = new Date(r.date);
-          return rDate < currentDate && !r.isFirstReading;
+          return rDate < currentDate && !r.isFirstTopup;
         })
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
       if (previousReadings.length > 0) {
         const previousReading = previousReadings[0];
-        return Math.max(0, Number(current.reading) - Number(previousReading.reading));
+        return Math.max(0, Number(current.litres) - Number(previousReading.litres));
       }
     }
     
@@ -199,7 +199,7 @@ export const MeterReadingsLog: React.FC<MeterReadingsLogProps> = ({
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       const dateStr = formatDate(reading.date).toLowerCase();
-      const readingStr = reading.reading.toString();
+      const readingStr = reading.litres.toString();
       const notesStr = (reading.notes || '').toLowerCase();
       
       return dateStr.includes(query) || 
@@ -440,7 +440,7 @@ export const MeterReadingsLog: React.FC<MeterReadingsLogProps> = ({
                               return (
                                 <TableRow key={reading.id}>
                                   <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>{formatDate(reading.date)}</TableCell>
-                                  <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>{Number(reading.reading).toFixed(2)} kWh</TableCell>
+                                  <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>{Number(reading.litres).toFixed(2)} L</TableCell>
                                   <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>{consumption > 0 ? `${consumption.toFixed(2)} kWh` : '-'}</TableCell>
                                   <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>{consumption > 0 ? `£${cost.toFixed(2)}` : '-'}</TableCell>
                                   <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>
@@ -517,7 +517,7 @@ export const MeterReadingsLog: React.FC<MeterReadingsLogProps> = ({
                 </div>
                 <div className="flex justify-between">
                   <span>Reading</span>
-                  <span>{Number(readingPendingDelete.reading).toFixed(2)} kWh</span>
+                  <span>{Number(readingPendingDelete.litres).toFixed(2)} L</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Type</span>
@@ -578,7 +578,7 @@ export const MeterReadingsLog: React.FC<MeterReadingsLogProps> = ({
                   </div>
                   <div>
                     <label className="text-xs  text-muted-foreground">Reading</label>
-                    <p className="text-xs ">{Number(selectedReading.reading).toFixed(2)} kWh</p>
+                    <p className="text-xs ">{Number(selectedReading.litres).toFixed(2)} L</p>
                   </div>
                   <div>
                     <label className="text-xs  text-muted-foreground">Type</label>

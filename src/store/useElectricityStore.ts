@@ -14,8 +14,6 @@ import type {
 } from '../types';
 
 // Deprecated - use useFuelStore instead
-// Type alias for backward compatibility
-type MeterReading = FuelTopup;
 
 interface ElectricityState {
   // Meter readings (deprecated - use useFuelStore instead)
@@ -70,6 +68,7 @@ const defaultPreferences: UserPreferences = {
   userId: 'default-user',
   theme: 'dark',
   currency: 'GBP',
+  trackMileage: false,
   // Deprecated - fuel tracking doesn't use unitRate/standingCharge
   // unitRate: 0.30, // £0.30 per kWh
   // standingCharge: 0.50, // £0.50 per day
@@ -882,7 +881,7 @@ export const useElectricityStore = create<ElectricityState>()(
         },
 
         // Utility functions
-        getConsumptionBetweenReadings: (reading1: FuelTopup, reading2: FuelTopup) => {
+        getConsumptionBetweenReadings: (_reading1: FuelTopup, reading2: FuelTopup) => {
           // For fuel, consumption is simply the litres added in the topup
           // Skip if reading2 is marked as first reading
           if (reading2.isFirstTopup) {
@@ -917,7 +916,7 @@ export const useElectricityStore = create<ElectricityState>()(
           return 0;
         },
 
-        calculateReadingCost: (litres, date?: Date) => {
+        calculateReadingCost: (_litres: number, _date?: Date) => {
           // For fuel, cost is already calculated (litres * costPerLitre)
           // This function is deprecated for fuel tracking
           return 0;

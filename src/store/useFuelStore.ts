@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { Decimal } from 'decimal.js';
 import { apiService } from '../services/api';
 import { socketService } from '../services/socketService';
 import { useToastStore } from './useToastStore';
@@ -785,7 +784,7 @@ export const useFuelStore = create<FuelState>()(
             
             // Calculate efficiency if mileage is tracked
             let efficiency: number | undefined = undefined;
-            if (i > 0 && currentTopup.mileage && sortedTopups[i - 1].mileage) {
+            if (i > 0 && currentTopup.mileage && sortedTopups[i - 1]?.mileage) {
               const milesDriven = currentTopup.mileage - sortedTopups[i - 1].mileage;
               if (milesDriven > 0 && currentTopup.litres > 0) {
                 efficiency = milesDriven / currentTopup.litres; // Miles per litre
@@ -893,7 +892,7 @@ export const useFuelStore = create<FuelState>()(
         },
 
         // Utility functions
-        getConsumptionBetweenTopups: (topup1, topup2) => {
+        getConsumptionBetweenTopups: (_topup1, topup2) => {
           // Skip consumption calculation if topup2 is marked as first topup
           if (topup2.isFirstTopup) {
             return 0;

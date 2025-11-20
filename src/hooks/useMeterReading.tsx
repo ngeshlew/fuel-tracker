@@ -3,7 +3,13 @@ import type { FuelTopup } from '../types';
 
 // Deprecated - use useFuelStore instead
 type MeterReading = FuelTopup;
-type MeterReadingState = any;
+interface MeterReadingState {
+  readings: MeterReading[];
+  isLoading: boolean;
+  error: string | null;
+  selectedReading: MeterReading | null;
+  isPanelOpen: boolean;
+}
 import {
   MeterReadingContext,
   type MeterReadingContextType,
@@ -28,7 +34,7 @@ export const MeterReadingProvider: React.FC<MeterReadingProviderProps> = ({
     async (
       readingData: Omit<MeterReading, 'id' | 'createdAt' | 'updatedAt'>
     ) => {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      setState((prev: MeterReadingState) => ({ ...prev, isLoading: true, error: null }));
 
       try {
         // TODO: Implement actual API call
@@ -39,14 +45,14 @@ export const MeterReadingProvider: React.FC<MeterReadingProviderProps> = ({
           updatedAt: new Date(),
         };
 
-        setState(prev => ({
+        setState((prev: MeterReadingState) => ({
           ...prev,
           readings: [...prev.readings, newReading],
           isLoading: false,
           error: null,
         }));
       } catch (error) {
-        setState(prev => ({
+        setState((prev: MeterReadingState) => ({
           ...prev,
           isLoading: false,
           error:
@@ -59,13 +65,13 @@ export const MeterReadingProvider: React.FC<MeterReadingProviderProps> = ({
 
   const updateReading = useCallback(
     async (id: string, readingData: Partial<MeterReading>) => {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      setState((prev: MeterReadingState) => ({ ...prev, isLoading: true, error: null }));
 
       try {
         // TODO: Implement actual API call
-        setState(prev => ({
+        setState((prev: MeterReadingState) => ({
           ...prev,
-          readings: prev.readings.map(reading =>
+          readings: prev.readings.map((reading: MeterReading) =>
             reading.id === id
               ? { ...reading, ...readingData, updatedAt: new Date() }
               : reading
@@ -74,7 +80,7 @@ export const MeterReadingProvider: React.FC<MeterReadingProviderProps> = ({
           error: null,
         }));
       } catch (error) {
-        setState(prev => ({
+        setState((prev: MeterReadingState) => ({
           ...prev,
           isLoading: false,
           error:
@@ -90,14 +96,14 @@ export const MeterReadingProvider: React.FC<MeterReadingProviderProps> = ({
 
     try {
       // TODO: Implement actual API call
-      setState(prev => ({
+      setState((prev: MeterReadingState) => ({
         ...prev,
-        readings: prev.readings.filter(reading => reading.id !== id),
+        readings: prev.readings.filter((reading: MeterReading) => reading.id !== id),
         isLoading: false,
         error: null,
       }));
     } catch (error) {
-      setState(prev => ({
+      setState((prev: MeterReadingState) => ({
         ...prev,
         isLoading: false,
         error:
@@ -107,7 +113,7 @@ export const MeterReadingProvider: React.FC<MeterReadingProviderProps> = ({
   }, []);
 
   const togglePanel = useCallback((isOpen: boolean) => {
-    setState(prev => ({ ...prev, isPanelOpen: isOpen }));
+    setState((prev: MeterReadingState) => ({ ...prev, isPanelOpen: isOpen }));
   }, []);
 
   const value: MeterReadingContextType = {

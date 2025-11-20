@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Icon } from "@/components/ui/icon";
 import { useFuelStore } from '../../store/useFuelStore';
 import { startOfMonth, endOfMonth, eachWeekOfInterval, endOfWeek } from 'date-fns';
 
@@ -127,7 +126,7 @@ export const WeeklyPieChart: React.FC<WeeklyPieChartProps> = ({ currentMonth, vi
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percentage }) => `${name}: ${percentage}%`}
+              label={(entry: WeeklyData) => `${entry.name}: ${entry.percentage}%`}
               outerRadius={80}
               fill="#8884d8"
               dataKey={viewMode === 'kwh' ? 'litres' : 'cost'}

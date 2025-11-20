@@ -9,7 +9,7 @@ interface ExportOptionsProps {
 }
 
 export const ExportOptions: React.FC<ExportOptionsProps> = ({ className = '' }) => {
-  const { topups, chartData, timeSeriesData } = useFuelStore();
+  const { topups: readings, chartData, timeSeriesData } = useFuelStore();
   const [isExporting, setIsExporting] = useState(false);
 
   const exportToCSV = async (data: any[], filename: string) => {
@@ -62,17 +62,21 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({ className = '' }) 
 
       switch (dataType) {
         case 'readings':
-          data = readings.map(reading => ({
-            id: reading.id,
-            meterId: reading.meterId,
-            reading: reading.reading,
-            date: reading.date.toISOString().split('T')[0],
-            type: reading.type,
-            notes: reading.notes || '',
-            createdAt: reading.createdAt.toISOString(),
-            updatedAt: reading.updatedAt.toISOString()
+          data = readings.map((topup: any) => ({
+            id: topup.id,
+            vehicleId: topup.vehicleId,
+            litres: topup.litres,
+            costPerLitre: topup.costPerLitre,
+            totalCost: topup.totalCost,
+            mileage: topup.mileage || null,
+            date: topup.date.toISOString().split('T')[0],
+            type: topup.type,
+            fuelType: topup.fuelType || '',
+            notes: topup.notes || '',
+            createdAt: topup.createdAt.toISOString(),
+            updatedAt: topup.updatedAt.toISOString()
           }));
-          filename = `meter-readings-${new Date().toISOString().split('T')[0]}`;
+          filename = `fuel-topups-${new Date().toISOString().split('T')[0]}`;
           break;
         
         case 'chart':
@@ -111,8 +115,8 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({ className = '' }) 
 
   const exportOptions = [
     {
-      title: 'Meter Readings',
-      description: 'Export all meter reading data',
+      title: 'Fuel Topups',
+      description: 'Export all fuel topup data',
       icon: <Icon name="table-panel-window-sidebar" className="h-6 w-6" />,
       dataType: 'readings' as const,
       available: readings.length > 0
@@ -141,7 +145,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({ className = '' }) 
           <span>Export Data</span>
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          Download your electricity data in various formats
+          Download your fuel tracking data in various formats
         </p>
       </CardHeader>
       
@@ -209,7 +213,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({ className = '' }) 
           <div className="text-center py-8 text-muted-foreground">
             <Icon name="download" className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p>No data available for export</p>
-            <p className="text-xs">Add some meter readings to enable export options</p>
+            <p className="text-xs">Add some fuel topups to enable export options</p>
           </div>
         )}
       </CardContent>
