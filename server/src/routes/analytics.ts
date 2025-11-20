@@ -54,40 +54,35 @@ router.get('/summary', async (req, res, next) => {
       };
     }
 
-    const readings = await prisma.meterReading.findMany({
+    const topups = await prisma.fuelTopup.findMany({
       where: whereClause,
       orderBy: { date: 'asc' }
     });
 
-    // Calculate total consumption
+    // Calculate total consumption (litres added)
     let totalConsumption = 0;
     let totalCost = 0;
-    const unitRate = 0.30; // Default unit rate
 
-    for (let i = 1; i < readings.length; i++) {
-      const prev = readings[i - 1];
-      const curr = readings[i];
-      if (!prev || !curr) continue;
+    // For fuel, consumption is the litres added in each topup (not a delta)
+    topups.forEach((topup) => {
+      if (topup.isFirstTopup) return; // Skip first topup
+      
+      const litres = typeof (topup.litres as any).toNumber === 'function'
+        ? (topup.litres as any).toNumber()
+        : Number(topup.litres as unknown as number);
+      const cost = typeof (topup.totalCost as any).toNumber === 'function'
+        ? (topup.totalCost as any).toNumber()
+        : Number(topup.totalCost as unknown as number);
 
-      const prevVal = typeof (prev.reading as any).toNumber === 'function'
-        ? (prev.reading as any).toNumber()
-        : Number(prev.reading as unknown as number);
-      const currVal = typeof (curr.reading as any).toNumber === 'function'
-        ? (curr.reading as any).toNumber()
-        : Number(curr.reading as unknown as number);
-
-      const consumption = currVal - prevVal;
-      if (consumption > 0) {
-        totalConsumption += consumption;
-        totalCost += consumption * unitRate;
-      }
-    }
+      totalConsumption += litres;
+      totalCost += cost;
+    });
 
     // Calculate daily average
     let days = 0;
-    if (readings.length > 1) {
-      const first = readings[0];
-      const last = readings[readings.length - 1];
+    if (topups.length > 1) {
+      const first = topups[0];
+      const last = topups[topups.length - 1];
       if (first && last) {
         days = Math.ceil((last.date.getTime() - first.date.getTime()) / (1000 * 60 * 60 * 24));
       }
@@ -96,29 +91,21 @@ router.get('/summary', async (req, res, next) => {
 
     // Determine trend
     let trend = 'stable';
-    if (readings.length >= 4) {
-      const firstHalf = readings.slice(0, Math.floor(readings.length / 2));
-      const secondHalf = readings.slice(Math.floor(readings.length / 2));
+    if (topups.length >= 4) {
+      const firstHalf = topups.slice(0, Math.floor(topups.length / 2));
+      const secondHalf = topups.slice(Math.floor(topups.length / 2));
       
       const computeAvg = (arr: any[]): number => {
         let sum = 0;
         let count = 0;
-        for (let i = 1; i < arr.length; i++) {
-          const prev = arr[i - 1];
-          const curr = arr[i];
-          if (!prev || !curr) continue;
-          const prevVal = typeof (prev.reading as any).toNumber === 'function'
-            ? (prev.reading as any).toNumber()
-            : Number(prev.reading as unknown as number);
-          const currVal = typeof (curr.reading as any).toNumber === 'function'
-            ? (curr.reading as any).toNumber()
-            : Number(curr.reading as unknown as number);
-          const diff = currVal - prevVal;
-          if (diff > 0) {
-            sum += diff;
-          }
+        arr.forEach((topup) => {
+          if (topup.isFirstTopup) return;
+          const litres = typeof (topup.litres as any).toNumber === 'function'
+            ? (topup.litres as any).toNumber()
+            : Number(topup.litres as unknown as number);
+          sum += litres;
           count++;
-        }
+        });
         return count > 0 ? sum / count : 0;
       };
 
@@ -139,10 +126,10 @@ router.get('/summary', async (req, res, next) => {
         totalCost: Math.round(totalCost * 100) / 100,
         dailyAverage: Math.round(dailyAverage * 100) / 100,
         trend,
-        readingCount: readings.length,
+        topupCount: topups.length,
         period: {
-          start: readings[0]?.date || null,
-          end: readings[readings.length - 1]?.date || null
+          start: topups[0]?.date || null,
+          end: topups[topups.length - 1]?.date || null
         }
       }
     });
@@ -156,29 +143,26 @@ router.get('/trends', async (req, res, next) => {
   try {
     const { period = 'monthly' } = req.query;
 
-    const readings = await prisma.meterReading.findMany({
+    const topups = await prisma.fuelTopup.findMany({
       orderBy: { date: 'asc' }
     });
 
-    // Group readings by period
+    // Group topups by period
     const groupedData = new Map<string, any[]>();
     
-    readings.forEach((reading: any, index: number) => {
-      if (index === 0) return;
-      const prevReading = readings[index - 1];
-      if (!prevReading || !reading) return;
-
-      const prevVal = typeof (prevReading.reading as any).toNumber === 'function'
-        ? (prevReading.reading as any).toNumber()
-        : Number(prevReading.reading as unknown as number);
-      const currVal = typeof (reading.reading as any).toNumber === 'function'
-        ? (reading.reading as any).toNumber()
-        : Number(reading.reading as unknown as number);
-      const consumption = currVal - prevVal;
+    topups.forEach((topup: any) => {
+      if (topup.isFirstTopup) return; // Skip first topup
       
-      if (consumption > 0) {
+      const litres = typeof (topup.litres as any).toNumber === 'function'
+        ? (topup.litres as any).toNumber()
+        : Number(topup.litres as unknown as number);
+      const cost = typeof (topup.totalCost as any).toNumber === 'function'
+        ? (topup.totalCost as any).toNumber()
+        : Number(topup.totalCost as unknown as number);
+      
+      if (litres > 0) {
         let key: string;
-        const date = new Date(reading.date);
+        const date = new Date(topup.date);
         
         const toDateOnly = (d: Date): string => {
           const iso = d.toISOString();
@@ -206,9 +190,9 @@ router.get('/trends', async (req, res, next) => {
         
         const list = groupedData.get(key) ?? [];
         list.push({
-          date: reading.date,
-          consumption,
-          cost: consumption * 0.30
+          date: topup.date,
+          consumption: litres,
+          cost: cost
         });
         groupedData.set(key, list);
       }
@@ -216,13 +200,13 @@ router.get('/trends', async (req, res, next) => {
 
     // Calculate aggregated data for each period
     const trendData = Array.from(groupedData.entries()).map(([period, data]) => {
-      const totalKwh = data.reduce((sum, item) => sum + item.consumption, 0);
+      const totalLitres = data.reduce((sum, item) => sum + item.consumption, 0);
       const totalCost = data.reduce((sum, item) => sum + item.cost, 0);
-      const averageDaily = totalKwh / data.length;
+      const averageDaily = totalLitres / data.length;
       
       return {
         period,
-        totalKwh: Math.round(totalKwh * 100) / 100,
+        totalLitres: Math.round(totalLitres * 100) / 100,
         totalCost: Math.round(totalCost * 100) / 100,
         averageDaily: Math.round(averageDaily * 100) / 100,
         dataCount: data.length
@@ -252,43 +236,41 @@ router.get('/export', async (req, res, next) => {
       };
     }
 
-    const readings = await prisma.meterReading.findMany({
+    const topups = await prisma.fuelTopup.findMany({
       where: whereClause,
       orderBy: { date: 'asc' }
     });
 
-    // Calculate consumption data
-    const consumptionData: Array<{ date: string; kwh: number; cost: number; readingId: string }> = [];
-    for (let i = 1; i < readings.length; i++) {
-      const prev = readings[i - 1];
-      const curr = readings[i];
-      if (!prev || !curr) continue;
-
-      const prevVal = typeof (prev.reading as any).toNumber === 'function'
-        ? (prev.reading as any).toNumber()
-        : Number(prev.reading as unknown as number);
-      const currVal = typeof (curr.reading as any).toNumber === 'function'
-        ? (curr.reading as any).toNumber()
-        : Number(curr.reading as unknown as number);
-      const consumption = currVal - prevVal;
-      if (consumption > 0) {
-        const iso = curr.date.toISOString();
+    // Calculate consumption data (litres added per topup)
+    const consumptionData: Array<{ date: string; litres: number; cost: number; topupId: string }> = [];
+    topups.forEach((topup) => {
+      if (topup.isFirstTopup) return; // Skip first topup
+      
+      const litres = typeof (topup.litres as any).toNumber === 'function'
+        ? (topup.litres as any).toNumber()
+        : Number(topup.litres as unknown as number);
+      const cost = typeof (topup.totalCost as any).toNumber === 'function'
+        ? (topup.totalCost as any).toNumber()
+        : Number(topup.totalCost as unknown as number);
+      
+      if (litres > 0) {
+        const iso = topup.date.toISOString();
         const parts = iso.split('T');
         const dateOnly = parts[0] ?? iso;
         consumptionData.push({
           date: dateOnly,
-          kwh: Math.round(consumption * 100) / 100,
-          cost: Math.round(consumption * 0.30 * 100) / 100,
-          readingId: curr.id
+          litres: Math.round(litres * 100) / 100,
+          cost: Math.round(cost * 100) / 100,
+          topupId: topup.id
         });
       }
-    }
+    });
 
     if (format === 'csv') {
       // Convert to CSV format
-      const csvHeader = 'Date,kWh,Cost,Reading ID\n';
+      const csvHeader = 'Date,Litres,Cost,Topup ID\n';
       const csvData = consumptionData.map(item => 
-        `${item.date},${item.kwh},${item.cost},${item.readingId}`
+        `${item.date},${item.litres},${item.cost},${item.topupId}`
       ).join('\n');
       
       res.setHeader('Content-Type', 'text/csv');

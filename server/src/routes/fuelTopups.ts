@@ -119,7 +119,7 @@ router.post('/', async (req, res, next) => {
     // Log underlying error for debugging during development
     console.error('Create fuel topup failed:', error);
     if (error instanceof z.ZodError) {
-      return next(createError(`Validation error: ${error.errors.map(e => e.message).join(', ')}`, 400));
+      return next(createError(`Validation error: ${error.issues.map((e: z.ZodIssue) => e.message).join(', ')}`, 400));
     }
     next(error as any);
   }
@@ -200,7 +200,7 @@ router.put('/:id', async (req, res, next) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return next(createError(`Validation error: ${error.errors.map(e => e.message).join(', ')}`, 400));
+      return next(createError(`Validation error: ${error.issues.map((e: z.ZodIssue) => e.message).join(', ')}`, 400));
     }
     next(createError('Failed to update fuel topup', 500));
   }
@@ -304,16 +304,31 @@ router.get('/analytics/consumption', async (req, res, next) => {
         }
       }
 
-      consumptionData.push({
+      const consumptionItem: {
+        date: string;
+        litres: number;
+        cost: number;
+        topupId: string;
+        mileage?: number;
+        efficiency?: number;
+      } = {
         date: dateOnly,
         litres: litres,
         cost: totalCost,
         topupId: topup.id,
-        mileage: topup.mileage ? (typeof (topup.mileage as any).toNumber === 'function'
+      };
+
+      if (topup.mileage) {
+        consumptionItem.mileage = typeof (topup.mileage as any).toNumber === 'function'
           ? (topup.mileage as any).toNumber()
-          : Number(topup.mileage as unknown as number)) : undefined,
-        efficiency: efficiency
-      });
+          : Number(topup.mileage as unknown as number);
+      }
+
+      if (efficiency !== undefined) {
+        consumptionItem.efficiency = efficiency;
+      }
+
+      consumptionData.push(consumptionItem);
     }
 
     res.json({
