@@ -154,7 +154,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({ onSuccess })
         date: data.date,
         type: 'MANUAL',
         notes: data.notes || '',
-        isFirstReading: isFirstReading, // Include first reading flag
+        isFirstTopup: isFirstReading, // Include first topup flag
       });
       
       form.reset();

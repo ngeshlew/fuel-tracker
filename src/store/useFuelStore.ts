@@ -784,8 +784,9 @@ export const useFuelStore = create<FuelState>()(
             
             // Calculate efficiency if mileage is tracked
             let efficiency: number | undefined = undefined;
-            if (i > 0 && currentTopup.mileage && sortedTopups[i - 1]?.mileage) {
-              const milesDriven = currentTopup.mileage - sortedTopups[i - 1].mileage;
+            const prevTopup = i > 0 ? sortedTopups[i - 1] : undefined;
+            if (prevTopup && currentTopup.mileage && prevTopup.mileage) {
+              const milesDriven = currentTopup.mileage - prevTopup.mileage;
               if (milesDriven > 0 && currentTopup.litres > 0) {
                 efficiency = milesDriven / currentTopup.litres; // Miles per litre
               }

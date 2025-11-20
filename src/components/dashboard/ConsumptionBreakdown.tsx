@@ -3,7 +3,7 @@ import { ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianG
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFuelStore } from '../../store/useFuelStore';
-import { startOfMonth, endOfMonth, eachWeekOfInterval, endOfWeek, eachDayOfInterval, format } from 'date-fns';
+import { startOfMonth, endOfMonth, eachWeekOfInterval, endOfWeek, format } from 'date-fns';
 
 interface WeeklyData {
   week: number;
