@@ -1,41 +1,36 @@
-// Core data types for the Electricity Tracker application
+// Core data types for the Fuel Tracker application
 
-export interface MeterReading {
+export interface FuelTopup {
   id: string;
-  meterId: string;
-  reading: number;
+  vehicleId: string; // Vehicle identifier (replaces meterId)
+  litres: number; // Litres of fuel added
+  costPerLitre: number; // Cost per litre in currency
+  totalCost: number; // Total cost for this topup (litres * costPerLitre)
+  mileage?: number; // Optional mileage at time of topup
   date: Date;
   type: 'MANUAL' | 'IMPORTED' | 'ESTIMATED';
+  fuelType?: 'PETROL' | 'DIESEL' | 'ELECTRIC' | 'HYBRID'; // Type of fuel
   notes?: string;
-  statementId?: string; // Optional reference to related statement
   // Derived fields for analytics; may be absent depending on source
-  consumption?: number; // kWh delta from previous reading
-  cost?: number; // Calculated cost for the interval
-  isFirstReading?: boolean; // Flag to mark the initial move-in reading
+  consumption?: number; // Litres consumed since last topup (if mileage tracked)
+  efficiency?: number; // Miles per litre (if mileage tracked)
+  isFirstTopup?: boolean; // Flag to mark the initial topup
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface EnergyStatement {
-  id: string;
-  supplier: string;
-  periodStart: Date;
-  periodEnd: Date;
-  totalKwh: number;
-  totalCost: number;
-  unitRate: number;
-  standingCharge: number;
-  fileUrl?: string;
-  importedAt: Date;
-}
+// Keep EnergyStatement for backward compatibility or remove if not needed
+// For fuel tracking, we primarily use FuelTopup
 
 export interface ConsumptionData {
   period: 'daily' | 'weekly' | 'monthly';
   date: Date;
-  kwh: number;
+  litres: number; // Changed from kwh to litres
   cost: number;
-  averageDailyUsage: number;
+  averageDailyUsage: number; // Average litres per day
   trend: 'increasing' | 'decreasing' | 'stable';
+  mileage?: number; // Optional mileage if tracked
+  efficiency?: number; // Optional miles per litre if mileage tracked
 }
 
 export interface UserPreferences {
@@ -43,8 +38,8 @@ export interface UserPreferences {
   userId: string;
   theme: 'dark' | 'light';
   currency: 'GBP' | 'USD' | 'EUR';
-  unitRate: number;
-  standingCharge: number;
+  defaultFuelType?: 'PETROL' | 'DIESEL' | 'ELECTRIC' | 'HYBRID';
+  trackMileage: boolean; // Whether to track mileage
   notifications: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -52,7 +47,7 @@ export interface UserPreferences {
 
 export interface AuditLog {
   id: string;
-  entityType: 'meter_reading' | 'energy_statement' | 'user_preferences';
+  entityType: 'fuel_topup' | 'user_preferences';
   entityId: string;
   action: 'create' | 'update' | 'delete';
   changes: Record<string, unknown>;
@@ -63,8 +58,10 @@ export interface AuditLog {
 // Chart data types
 export interface ChartDataPoint {
   date: string;
-  kwh: number;
+  litres: number; // Changed from kwh to litres
   cost: number;
+  mileage?: number; // Optional mileage
+  efficiency?: number; // Optional miles per litre
   label?: string;
 }
 
@@ -78,29 +75,24 @@ export interface PieChartData {
 export interface TimeSeriesData {
   period: string;
   data: ChartDataPoint[];
-  totalKwh: number;
+  totalLitres: number; // Changed from totalKwh to totalLitres
   totalCost: number;
-  averageDaily: number;
+  averageDaily: number; // Average litres per day
   trend: 'increasing' | 'decreasing' | 'stable';
+  averageEfficiency?: number; // Optional average miles per litre
 }
 
 // Form types
-export interface MeterReadingForm {
-  reading: number;
+export interface FuelTopupForm {
+  litres: number;
+  costPerLitre: number;
+  mileage?: number; // Optional
   date: Date;
+  fuelType?: 'PETROL' | 'DIESEL' | 'ELECTRIC' | 'HYBRID';
   notes?: string;
 }
 
-export interface EnergyStatementForm {
-  supplier: string;
-  periodStart: Date;
-  periodEnd: Date;
-  totalKwh: number;
-  totalCost: number;
-  unitRate: number;
-  standingCharge: number;
-  file?: File;
-}
+// EnergyStatementForm removed - not needed for fuel tracking
 
 // API response types
 export interface ApiResponse<T> {
@@ -130,17 +122,18 @@ export interface UIState {
 export interface DashboardState {
   currentMonth: TimeSeriesData;
   previousMonth: TimeSeriesData;
-  totalKwh: number;
+  totalLitres: number; // Changed from totalKwh
   totalCost: number;
-  averageDaily: number;
+  averageDaily: number; // Average litres per day
   trend: 'increasing' | 'decreasing' | 'stable';
+  averageEfficiency?: number; // Optional average miles per litre
 }
 
-export interface MeterReadingState {
-  readings: MeterReading[];
+export interface FuelTopupState {
+  topups: FuelTopup[];
   isLoading: boolean;
   error: string | null;
-  selectedReading: MeterReading | null;
+  selectedTopup: FuelTopup | null;
   isPanelOpen: boolean;
 }
 
@@ -200,9 +193,9 @@ export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>;
 
 // Event types
-export interface MeterReadingEvent {
-  type: 'reading_added' | 'reading_updated' | 'reading_deleted';
-  reading: MeterReading;
+export interface FuelTopupEvent {
+  type: 'topup_added' | 'topup_updated' | 'topup_deleted';
+  topup: FuelTopup;
   timestamp: Date;
 }
 
@@ -240,9 +233,17 @@ export interface ValidationError {
 }
 
 // Constants
-export const METER_READING_TYPES = {
-  MANUAL: 'manual',
-  IMPORTED: 'imported',
+export const FUEL_TOPUP_TYPES = {
+  MANUAL: 'MANUAL',
+  IMPORTED: 'IMPORTED',
+  ESTIMATED: 'ESTIMATED',
+} as const;
+
+export const FUEL_TYPES = {
+  PETROL: 'PETROL',
+  DIESEL: 'DIESEL',
+  ELECTRIC: 'ELECTRIC',
+  HYBRID: 'HYBRID',
 } as const;
 
 export const CONSUMPTION_PERIODS = {

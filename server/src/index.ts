@@ -10,7 +10,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Import routes
-import meterReadingRoutes from './routes/meterReadings';
+import fuelTopupRoutes from './routes/fuelTopups';
 import analyticsRoutes from './routes/analytics';
 import path from 'path';
 import aiRoutes from './routes/ai';
@@ -47,8 +47,8 @@ app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 app.get('/', (_req, res) => {
   res.status(200).json({
     success: true,
-    service: 'electricity-tracker-backend',
-    endpoints: ['/health', '/api/ai/health', '/api/meter-readings', '/api/analytics'],
+    service: 'fuel-tracker-backend',
+    endpoints: ['/health', '/api/ai/health', '/api/fuel-topups', '/api/analytics'],
     timestamp: new Date().toISOString()
   });
 });
@@ -85,7 +85,7 @@ app.get('/test-db', async (_req, res) => {
 
 
 // API Routes
-app.use('/api/meter-readings', meterReadingRoutes);
+app.use('/api/fuel-topups', fuelTopupRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ai', aiRoutes);
 
@@ -97,23 +97,23 @@ app.use(errorHandler);
 io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
-  // Join meter readings room for real-time updates
-  socket.on('join-meter-readings', () => {
-    socket.join('meter-readings');
-    console.log(`Client ${socket.id} joined meter-readings room`);
+  // Join fuel topups room for real-time updates
+  socket.on('join-fuel-topups', () => {
+    socket.join('fuel-topups');
+    console.log(`Client ${socket.id} joined fuel-topups room`);
   });
 
-  // Handle meter reading updates
-  socket.on('meter-reading-added', (data) => {
-    socket.to('meter-readings').emit('meter-reading-added', data);
+  // Handle fuel topup updates
+  socket.on('fuel-topup-added', (data) => {
+    socket.to('fuel-topups').emit('fuel-topup-added', data);
   });
 
-  socket.on('meter-reading-updated', (data) => {
-    socket.to('meter-readings').emit('meter-reading-updated', data);
+  socket.on('fuel-topup-updated', (data) => {
+    socket.to('fuel-topups').emit('fuel-topup-updated', data);
   });
 
-  socket.on('meter-reading-deleted', (data) => {
-    socket.to('meter-readings').emit('meter-reading-deleted', data);
+  socket.on('fuel-topup-deleted', (data) => {
+    socket.to('fuel-topups').emit('fuel-topup-deleted', data);
   });
 
   socket.on('disconnect', () => {

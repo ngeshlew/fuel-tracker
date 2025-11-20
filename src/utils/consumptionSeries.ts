@@ -1,9 +1,11 @@
-import type { MeterReading } from '@/types';
+import type { FuelTopup } from '@/types';
 
 export interface DailyConsumptionPoint {
   date: string;
-  consumption: number;
+  consumption: number; // Litres
   cost: number;
+  mileage?: number;
+  efficiency?: number; // Miles per litre
 }
 
 interface BuildSeriesOptions {
@@ -11,8 +13,8 @@ interface BuildSeriesOptions {
 }
 
 /**
- * Build a daily consumption series directly from meter readings.
- * Ensures parity with Reading History by deriving deltas between consecutive readings.
+ * Build a daily consumption series directly from fuel topups.
+ * For fuel tracking, consumption is the litres added in each topup.
  */
 const getLocalDateKey = (date: Date): string => {
   const local = new Date(date);
@@ -21,50 +23,93 @@ const getLocalDateKey = (date: Date): string => {
 };
 
 export const buildDailyConsumptionSeries = (
-  readings: MeterReading[],
-  calculateCost: (kwh: number, date?: Date) => number,
+  topups: FuelTopup[],
   options: BuildSeriesOptions = { fillMissingDays: true }
 ): DailyConsumptionPoint[] => {
-  if (!readings || readings.length === 0) return [];
+  if (!topups || topups.length === 0) return [];
 
-  const sorted = [...readings].sort(
+  const sorted = [...topups].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
-  const dailyBestReading = new Map<string, MeterReading>();
-  sorted.forEach((reading) => {
-    const dateKey = getLocalDateKey(new Date(reading.date));
-    const existing = dailyBestReading.get(dateKey);
+  const dailyBestTopup = new Map<string, FuelTopup>();
+  sorted.forEach((topup) => {
+    const dateKey = getLocalDateKey(new Date(topup.date));
+    const existing = dailyBestTopup.get(dateKey);
     if (!existing) {
-      dailyBestReading.set(dateKey, reading);
+      dailyBestTopup.set(dateKey, topup);
       return;
     }
-    if (reading.type === 'MANUAL' && existing.type !== 'MANUAL') {
-      dailyBestReading.set(dateKey, reading);
+    if (topup.type === 'MANUAL' && existing.type !== 'MANUAL') {
+      dailyBestTopup.set(dateKey, topup);
       return;
     }
-    if (new Date(reading.date).getTime() > new Date(existing.date).getTime()) {
-      dailyBestReading.set(dateKey, reading);
+    if (new Date(topup.date).getTime() > new Date(existing.date).getTime()) {
+      dailyBestTopup.set(dateKey, topup);
     }
   });
 
-  const normalizedReadings = Array.from(dailyBestReading.values()).sort(
+  const normalizedTopups = Array.from(dailyBestTopup.values()).sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
   const dailyMap = new Map<string, DailyConsumptionPoint>();
 
-  for (let i = 1; i < normalizedReadings.length; i++) {
-    const previous = normalizedReadings[i - 1];
-    const current = normalizedReadings[i];
+  for (let i = 0; i < normalizedTopups.length; i++) {
+    const current = normalizedTopups[i];
 
-    if (!previous || !current) continue;
-    if (current.isFirstReading) continue;
+    if (!current) continue;
+    if (current.isFirstTopup && i === 0) {
+      // First topup - show 0 consumption
+      const isoDate = getLocalDateKey(new Date(current.date));
+      dailyMap.set(isoDate, {
+        date: isoDate,
+        consumption: 0,
+        cost: 0,
+        mileage: current.mileage,
+      });
+      continue;
+    }
 
-    const previousDate = new Date(previous.date);
     const currentDate = new Date(current.date);
+    const isoDate = getLocalDateKey(currentDate);
 
-    if (options.fillMissingDays) {
+    // Calculate efficiency if mileage is tracked
+    let efficiency: number | undefined = undefined;
+    if (i > 0 && current.mileage && normalizedTopups[i - 1].mileage) {
+      const milesDriven = current.mileage - normalizedTopups[i - 1].mileage;
+      if (milesDriven > 0 && current.litres > 0) {
+        efficiency = milesDriven / current.litres; // Miles per litre
+      }
+    }
+
+    // For fuel, consumption is the litres added in this topup
+    const consumption = current.litres;
+    const cost = current.totalCost;
+
+    if (dailyMap.has(isoDate)) {
+      const existing = dailyMap.get(isoDate)!;
+      dailyMap.set(isoDate, {
+        date: isoDate,
+        consumption: existing.consumption + consumption,
+        cost: existing.cost + cost,
+        mileage: current.mileage || existing.mileage,
+        efficiency: efficiency || existing.efficiency,
+      });
+    } else {
+      dailyMap.set(isoDate, {
+        date: isoDate,
+        consumption,
+        cost,
+        mileage: current.mileage,
+        efficiency,
+      });
+    }
+
+    // Fill missing days if option is enabled
+    if (options.fillMissingDays && i > 0) {
+      const previous = normalizedTopups[i - 1];
+      const previousDate = new Date(previous.date);
       const gapDate = new Date(previousDate);
       gapDate.setDate(gapDate.getDate() + 1);
       while (gapDate < currentDate) {
@@ -78,26 +123,6 @@ export const buildDailyConsumptionSeries = (
         }
         gapDate.setDate(gapDate.getDate() + 1);
       }
-    }
-
-    const consumption = Math.max(0, Number(current.reading) - Number(previous.reading));
-    const isoDate = getLocalDateKey(currentDate);
-
-    const cost = consumption > 0 ? calculateCost(consumption, currentDate) : 0;
-
-    if (dailyMap.has(isoDate)) {
-      const existing = dailyMap.get(isoDate)!;
-      dailyMap.set(isoDate, {
-        date: isoDate,
-        consumption: existing.consumption + consumption,
-        cost: existing.cost + cost,
-      });
-    } else {
-      dailyMap.set(isoDate, {
-        date: isoDate,
-        consumption,
-        cost,
-      });
     }
   }
 

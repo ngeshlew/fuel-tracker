@@ -1,24 +1,28 @@
-import { MeterReading } from '../types';
+import { FuelTopup } from '../types';
 
 /**
- * Export meter readings to CSV format
+ * Export fuel topups to CSV format
  */
-export const exportToCSV = (readings: MeterReading[], filename: string = 'meter-readings.csv') => {
+export const exportToCSV = (topups: FuelTopup[], filename: string = 'fuel-topups.csv') => {
   // CSV header
-  const headers = ['Date', 'Time', 'Reading (kWh)', 'Type', 'Notes', 'Created At', 'Updated At'];
+  const headers = ['Date', 'Time', 'Litres', 'Cost Per Litre', 'Total Cost', 'Mileage', 'Fuel Type', 'Type', 'Notes', 'Created At', 'Updated At'];
   
-  // Convert readings to CSV rows
-  const rows = readings.map(reading => {
-    const date = new Date(reading.date);
-    const createdAt = new Date(reading.createdAt);
-    const updatedAt = new Date(reading.updatedAt);
+  // Convert topups to CSV rows
+  const rows = topups.map(topup => {
+    const date = new Date(topup.date);
+    const createdAt = new Date(topup.createdAt);
+    const updatedAt = new Date(topup.updatedAt);
     
     return [
       date.toLocaleDateString('en-GB'),
       date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-      reading.reading.toString(),
-      reading.type,
-      reading.notes || '',
+      topup.litres.toString(),
+      topup.costPerLitre.toString(),
+      topup.totalCost.toString(),
+      topup.mileage?.toString() || '',
+      topup.fuelType || '',
+      topup.type,
+      topup.notes || '',
       createdAt.toLocaleString('en-GB'),
       updatedAt.toLocaleString('en-GB'),
     ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
@@ -41,10 +45,10 @@ export const exportToCSV = (readings: MeterReading[], filename: string = 'meter-
 };
 
 /**
- * Export meter readings to JSON format
+ * Export fuel topups to JSON format
  */
-export const exportToJSON = (readings: MeterReading[], filename: string = 'meter-readings.json') => {
-  const jsonContent = JSON.stringify(readings, null, 2);
+export const exportToJSON = (topups: FuelTopup[], filename: string = 'fuel-topups.json') => {
+  const jsonContent = JSON.stringify(topups, null, 2);
   
   const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
   const link = document.createElement('a');
@@ -59,16 +63,16 @@ export const exportToJSON = (readings: MeterReading[], filename: string = 'meter
 };
 
 /**
- * Filter readings by date range
+ * Filter topups by date range
  */
-export const filterReadingsByDateRange = (
-  readings: MeterReading[],
+export const filterTopupsByDateRange = (
+  topups: FuelTopup[],
   startDate: Date,
   endDate: Date
-): MeterReading[] => {
-  return readings.filter(reading => {
-    const readingDate = new Date(reading.date);
-    return readingDate >= startDate && readingDate <= endDate;
+): FuelTopup[] => {
+  return topups.filter(topup => {
+    const topupDate = new Date(topup.date);
+    return topupDate >= startDate && topupDate <= endDate;
   });
 };
 

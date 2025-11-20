@@ -10,18 +10,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model MeterReading {
+model FuelTopup {
   id            String   @id @default(cuid())
-  meterId       String
-  reading       Decimal
+  vehicleId     String   @map("vehicle_id")
+  litres        Decimal
+  costPerLitre  Decimal  @map("cost_per_litre")
+  totalCost     Decimal  @map("total_cost")
+  mileage       Decimal?
   date          DateTime
-  type          ReadingType
+  type          TopupType
+  fuelType      FuelType? @map("fuel_type")
   notes         String?
-  isFirstReading Boolean @default(false) @map("is_first_reading")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isFirstTopup  Boolean  @default(false) @map("is_first_topup")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  @@map("meter_readings")
+  @@map("fuel_topups")
 }
 
 model EnergyStatement {
@@ -43,9 +47,10 @@ model ConsumptionAnalytics {
   id                String      @id @default(cuid())
   periodType        PeriodType  @map("period_type")
   periodDate        DateTime    @map("period_date")
-  kwh               Decimal
+  litres            Decimal     // Changed from kwh
   cost              Decimal
   averageDailyUsage Decimal?    @map("average_daily_usage")
+  averageEfficiency Decimal?    @map("average_efficiency") // Miles per litre
   trend             TrendType?
   createdAt         DateTime    @default(now()) @map("created_at")
 
@@ -57,8 +62,8 @@ model UserPreferences {
   userId         String   @map("user_id")
   theme          String   @default("dark")
   currency       String   @default("GBP")
-  unitRate       Decimal  @map("unit_rate") @default(0.30)
-  standingCharge Decimal  @map("standing_charge") @default(0.50)
+  defaultFuelType FuelType? @map("default_fuel_type")
+  trackMileage   Boolean  @default(false) @map("track_mileage")
   notifications  Boolean  @default(true)
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
@@ -66,10 +71,17 @@ model UserPreferences {
   @@map("user_preferences")
 }
 
-enum ReadingType {
+enum TopupType {
   MANUAL
   IMPORTED
   ESTIMATED
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  ELECTRIC
+  HYBRID
 }
 
 enum PeriodType {

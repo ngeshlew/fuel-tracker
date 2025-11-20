@@ -1,5 +1,5 @@
 // API service for communicating with the backend
-const API_BASE_URL = import.meta.env.VITE_SERVER_URL || 'https://electricity-tracker-production.up.railway.app';
+const API_BASE_URL = import.meta.env.VITE_SERVER_URL || 'https://fuel-tracker.up.railway.app';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -10,31 +10,38 @@ export interface ApiResponse<T> {
   };
 }
 
-export interface MeterReading {
+export interface FuelTopup {
   id: string;
-  meterId: string;
-  reading: number;
+  vehicleId: string;
+  litres: number;
+  costPerLitre: number;
+  totalCost: number;
+  mileage?: number;
   date: string;
   type: 'MANUAL' | 'IMPORTED' | 'ESTIMATED';
+  fuelType?: 'PETROL' | 'DIESEL' | 'ELECTRIC' | 'HYBRID';
   notes?: string;
-  isFirstReading?: boolean;
+  isFirstTopup?: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface ConsumptionData {
   date: string;
-  kwh: number;
+  litres: number;
   cost: number;
-  readingId: string;
+  topupId: string;
+  mileage?: number;
+  efficiency?: number; // Miles per litre
 }
 
 export interface AnalyticsSummary {
-  totalConsumption: number;
+  totalConsumption: number; // Total litres
   totalCost: number;
-  dailyAverage: number;
+  dailyAverage: number; // Average litres per day
   trend: 'increasing' | 'decreasing' | 'stable';
-  readingCount: number;
+  topupCount: number;
+  averageEfficiency?: number; // Average miles per litre
   period: {
     start: string | null;
     end: string | null;
@@ -43,10 +50,11 @@ export interface AnalyticsSummary {
 
 export interface TrendData {
   period: string;
-  totalKwh: number;
+  totalLitres: number;
   totalCost: number;
-  averageDaily: number;
+  averageDaily: number; // Average litres per day
   dataCount: number;
+  averageEfficiency?: number; // Average miles per litre
 }
 
 class ApiService {
@@ -89,31 +97,31 @@ class ApiService {
     }
   }
 
-  // Meter Reading endpoints
-  async getMeterReadings(): Promise<ApiResponse<MeterReading[]>> {
-    return this.request<MeterReading[]>('/api/meter-readings');
+  // Fuel Topup endpoints
+  async getFuelTopups(): Promise<ApiResponse<FuelTopup[]>> {
+    return this.request<FuelTopup[]>('/api/fuel-topups');
   }
 
-  async getMeterReading(id: string): Promise<ApiResponse<MeterReading>> {
-    return this.request<MeterReading>(`/api/meter-readings/${id}`);
+  async getFuelTopup(id: string): Promise<ApiResponse<FuelTopup>> {
+    return this.request<FuelTopup>(`/api/fuel-topups/${id}`);
   }
 
-  async createMeterReading(reading: Omit<MeterReading, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<MeterReading>> {
-    return this.request<MeterReading>('/api/meter-readings', {
+  async createFuelTopup(topup: Omit<FuelTopup, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<FuelTopup>> {
+    return this.request<FuelTopup>('/api/fuel-topups', {
       method: 'POST',
-      body: JSON.stringify(reading),
+      body: JSON.stringify(topup),
     });
   }
 
-  async updateMeterReading(id: string, reading: Partial<MeterReading>): Promise<ApiResponse<MeterReading>> {
-    return this.request<MeterReading>(`/api/meter-readings/${id}`, {
+  async updateFuelTopup(id: string, topup: Partial<FuelTopup>): Promise<ApiResponse<FuelTopup>> {
+    return this.request<FuelTopup>(`/api/fuel-topups/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(reading),
+      body: JSON.stringify(topup),
     });
   }
 
-  async deleteMeterReading(id: string): Promise<ApiResponse<{ message: string }>> {
-    return this.request<{ message: string }>(`/api/meter-readings/${id}`, {
+  async deleteFuelTopup(id: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>(`/api/fuel-topups/${id}`, {
       method: 'DELETE',
     });
   }
@@ -129,7 +137,7 @@ class ApiService {
     if (params?.period) searchParams.append('period', params.period);
 
     const queryString = searchParams.toString();
-    const endpoint = `/api/meter-readings/analytics/consumption${queryString ? `?${queryString}` : ''}`;
+    const endpoint = `/api/fuel-topups/analytics/consumption${queryString ? `?${queryString}` : ''}`;
     
     return this.request<ConsumptionData[]>(endpoint);
   }

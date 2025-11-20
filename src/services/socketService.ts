@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
-import type { MeterReading } from './api';
+import type { FuelTopup } from './api';
 
-const SOCKET_URL = import.meta.env.VITE_SERVER_URL || 'https://electricity-tracker-production.up.railway.app';
+const SOCKET_URL = import.meta.env.VITE_SERVER_URL || 'https://fuel-tracker.up.railway.app';
 
 class SocketService {
   private socket: Socket | null = null;
@@ -23,7 +23,7 @@ class SocketService {
     this.socket.on('connect', () => {
       console.log('🔌 Connected to server');
       this.isConnected = true;
-      this.joinMeterReadingsRoom();
+      this.joinFuelTopupsRoom();
     });
 
     this.socket.on('disconnect', () => {
@@ -47,66 +47,66 @@ class SocketService {
     }
   }
 
-  private joinMeterReadingsRoom(): void {
+  private joinFuelTopupsRoom(): void {
     if (this.socket) {
-      this.socket.emit('join-meter-readings');
+      this.socket.emit('join-fuel-topups');
     }
   }
 
-  // Meter reading event listeners
-  onMeterReadingAdded(callback: (reading: MeterReading) => void): void {
+  // Fuel topup event listeners
+  onFuelTopupAdded(callback: (topup: FuelTopup) => void): void {
     if (this.socket) {
-      this.socket.on('meter-reading-added', callback);
+      this.socket.on('fuel-topup-added', callback);
     }
   }
 
-  onMeterReadingUpdated(callback: (reading: MeterReading) => void): void {
+  onFuelTopupUpdated(callback: (topup: FuelTopup) => void): void {
     if (this.socket) {
-      this.socket.on('meter-reading-updated', callback);
+      this.socket.on('fuel-topup-updated', callback);
     }
   }
 
-  onMeterReadingDeleted(callback: (data: { id: string }) => void): void {
+  onFuelTopupDeleted(callback: (data: { id: string }) => void): void {
     if (this.socket) {
-      this.socket.on('meter-reading-deleted', callback);
+      this.socket.on('fuel-topup-deleted', callback);
     }
   }
 
   // Remove event listeners
-  offMeterReadingAdded(callback: (reading: MeterReading) => void): void {
+  offFuelTopupAdded(callback: (topup: FuelTopup) => void): void {
     if (this.socket) {
-      this.socket.off('meter-reading-added', callback);
+      this.socket.off('fuel-topup-added', callback);
     }
   }
 
-  offMeterReadingUpdated(callback: (reading: MeterReading) => void): void {
+  offFuelTopupUpdated(callback: (topup: FuelTopup) => void): void {
     if (this.socket) {
-      this.socket.off('meter-reading-updated', callback);
+      this.socket.off('fuel-topup-updated', callback);
     }
   }
 
-  offMeterReadingDeleted(callback: (data: { id: string }) => void): void {
+  offFuelTopupDeleted(callback: (data: { id: string }) => void): void {
     if (this.socket) {
-      this.socket.off('meter-reading-deleted', callback);
+      this.socket.off('fuel-topup-deleted', callback);
     }
   }
 
   // Emit events
-  emitMeterReadingAdded(reading: MeterReading): void {
+  emitFuelTopupAdded(topup: FuelTopup): void {
     if (this.socket) {
-      this.socket.emit('meter-reading-added', reading);
+      this.socket.emit('fuel-topup-added', topup);
     }
   }
 
-  emitMeterReadingUpdated(reading: MeterReading): void {
+  emitFuelTopupUpdated(topup: FuelTopup): void {
     if (this.socket) {
-      this.socket.emit('meter-reading-updated', reading);
+      this.socket.emit('fuel-topup-updated', topup);
     }
   }
 
-  emitMeterReadingDeleted(id: string): void {
+  emitFuelTopupDeleted(id: string): void {
     if (this.socket) {
-      this.socket.emit('meter-reading-deleted', { id });
+      this.socket.emit('fuel-topup-deleted', { id });
     }
   }
 
