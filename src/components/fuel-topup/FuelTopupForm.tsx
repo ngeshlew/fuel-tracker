@@ -140,7 +140,24 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
   const lastTopup = getLastTopup();
   const form = useForm<FuelTopupFormData>({
     resolver: zodResolver(fuelTopupSchema),
-    defaultValues: {
+    defaultValues: initialData ? {
+      litres: typeof initialData.litres === 'number' ? initialData.litres : Number(initialData.litres),
+      costPerLitre: typeof initialData.costPerLitre === 'number' ? initialData.costPerLitre : Number(initialData.costPerLitre),
+      mileage: initialData.mileage ? (typeof initialData.mileage === 'number' ? initialData.mileage : Number(initialData.mileage)) : undefined,
+      date: new Date(initialData.date),
+      fuelType: initialData.fuelType || 'PETROL',
+      retailer: initialData.retailer || '',
+      locationName: initialData.locationName || '',
+      address: initialData.address || '',
+      latitude: initialData.latitude ? (typeof initialData.latitude === 'number' ? initialData.latitude : Number(initialData.latitude)) : undefined,
+      longitude: initialData.longitude ? (typeof initialData.longitude === 'number' ? initialData.longitude : Number(initialData.longitude)) : undefined,
+      placeId: initialData.placeId || '',
+      fuelGrade: initialData.fuelGrade || undefined,
+      vatRate: initialData.vatRate ? (typeof initialData.vatRate === 'number' ? initialData.vatRate : Number(initialData.vatRate)) : undefined,
+      netPrice: initialData.netPrice ? (typeof initialData.netPrice === 'number' ? initialData.netPrice : Number(initialData.netPrice)) : undefined,
+      vatAmount: initialData.vatAmount ? (typeof initialData.vatAmount === 'number' ? initialData.vatAmount : Number(initialData.vatAmount)) : undefined,
+      notes: initialData.notes || '',
+    } : {
       litres: 50,
       costPerLitre: 1.50,
       mileage: lastTopup?.mileage || undefined,
