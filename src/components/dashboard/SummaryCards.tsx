@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/card";
 import { LoadingCard } from "@/components/ui/skeleton";
 import { Icon } from "@/components/ui/icon";
-import { useFuelStore } from '../../store/useFuelStore';
+import { useFuelStore } from '@/store/useFuelStore';
 
 /**
  * SummaryCards Component

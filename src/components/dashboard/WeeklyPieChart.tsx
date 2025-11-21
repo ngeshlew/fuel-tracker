@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useFuelStore } from '../../store/useFuelStore';
+import { useFuelStore } from '@/store/useFuelStore';
 import { startOfMonth, endOfMonth, eachWeekOfInterval, endOfWeek } from 'date-fns';
 
 interface WeeklyData {

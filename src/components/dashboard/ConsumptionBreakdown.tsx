@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useFuelStore } from '../../store/useFuelStore';
+import { useFuelStore } from '@/store/useFuelStore';
 import { startOfMonth, endOfMonth, eachWeekOfInterval, endOfWeek, format } from 'date-fns';
 
 interface WeeklyData {

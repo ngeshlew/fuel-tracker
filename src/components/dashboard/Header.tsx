@@ -6,7 +6,7 @@ import { AuthModal } from '../auth/AuthModal';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Icon } from "@/components/ui/icon";
-import { useFuelStore } from '../../store/useFuelStore';
+import { useFuelStore } from '@/store/useFuelStore';
 import { KeyboardShortcutsPopover } from '@/components/ui/keyboard-shortcuts-dialog';
 import { HelpPopover } from '@/components/ui/help-popover';
 

@@ -12,7 +12,7 @@ import { MonthSelector } from './MonthSelector';
 import { FuelTopupPanel } from '../fuel-topup/FuelTopupPanel';
 import { FuelTopupsLog } from '../fuel-topup/FuelTopupsLog';
 import { MobileNavigation } from '../mobile/MobileNavigation';
-import { useFuelStore } from '../../store/useFuelStore';
+import { useFuelStore } from '@/store/useFuelStore';
 import { UKFuelPriceComparison } from './UKFuelPriceComparison';
 
 export const Dashboard: FC = () => {

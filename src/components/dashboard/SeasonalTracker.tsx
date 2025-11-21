@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { Icon } from "@/components/ui/icon";
 import { getSeasonColor } from "@/utils/seasonalColors";
-import { useFuelStore } from '../../store/useFuelStore';
+import { useFuelStore } from '@/store/useFuelStore';
 
 interface SeasonalData {
   season: string;
