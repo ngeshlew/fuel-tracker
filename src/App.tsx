@@ -11,7 +11,6 @@ import { SettingsLayout } from './components/settings/SettingsLayout';
 import { InsightsLayout } from './components/insights/InsightsLayout';
 import { StatementsLayout } from './components/statements/StatementsLayout';
 import { NotificationsLayout } from './components/notifications/NotificationsLayout';
-import { TariffLayout } from './components/tariff/TariffLayout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { useFuelStore } from './store/useFuelStore';
@@ -88,7 +87,6 @@ function App() {
               <Route path="/insights" element={<ProtectedRoute><InsightsLayout /></ProtectedRoute>} />
               <Route path="/statements" element={<ProtectedRoute><StatementsLayout /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><NotificationsLayout /></ProtectedRoute>} />
-              <Route path="/tariff" element={<ProtectedRoute><TariffLayout /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsLayout /></ProtectedRoute>} />
               </Routes>
             </div>

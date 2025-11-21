@@ -13,15 +13,11 @@ import { FuelTopupPanel } from '../fuel-topup/FuelTopupPanel';
 import { FuelTopupsLog } from '../fuel-topup/FuelTopupsLog';
 import { MobileNavigation } from '../mobile/MobileNavigation';
 import { useFuelStore } from '../../store/useFuelStore';
-import { CurrentTariffInfo } from '../tariff/CurrentTariffInfo';
-import { TariffHistoryTable } from '../tariff/TariffHistoryTable';
-import { UKPriceComparison } from '../tariff/UKPriceComparison';
-import { TariffFormDialog } from '../tariff/TariffFormDialog';
+import { UKFuelPriceComparison } from './UKFuelPriceComparison';
 
 export const Dashboard: FC = () => {
   const { isTopupPanelOpen, toggleTopupPanel, loadFuelTopups } = useFuelStore();
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [isTariffDialogOpen, setIsTariffDialogOpen] = useState(false);
 
   // Load fuel topups when component mounts
   useEffect(() => {
@@ -69,6 +65,11 @@ export const Dashboard: FC = () => {
                   <SummaryCards currentMonth={currentMonth} />
                 </div>
 
+                {/* UK Price Comparison */}
+                <div className="mb-8" style={{ marginBottom: 'var(--space-xl)' }}>
+                  <UKFuelPriceComparison />
+                </div>
+
                 {/* Main Content - Reduced spacing (2x less) */}
                 <div className="space-y-8 w-full" style={{ gap: 'var(--space-xl)' }}>
                   {/* Consumption Breakdown - Full width row */}
@@ -98,22 +99,6 @@ export const Dashboard: FC = () => {
                   
                   {/* Seasonal Tracker */}
                   <SeasonalTracker />
-
-                  {/* Tariff Section */}
-                  <section className="space-y-6">
-                    <div className="border-t border-dotted pt-6" style={{ borderColor: 'var(--color-accent-red)' }}>
-                      <h2 className="text-2xl font-normal tracking-tight uppercase">Tariff</h2>
-                      <p className="text-muted-foreground mt-1 text-sm">
-                        Manage your energy tariff and track cost savings
-                      </p>
-                    </div>
-
-                    <CurrentTariffInfo />
-
-                    <TariffHistoryTable onAddTariff={() => setIsTariffDialogOpen(true)} />
-
-                    <UKPriceComparison />
-                  </section>
                 </div>
 
                 {/* Recent Topups - Reduced spacing (2x less) */}
@@ -126,10 +111,6 @@ export const Dashboard: FC = () => {
             <FuelTopupPanel
               isOpen={isTopupPanelOpen}
               onClose={() => toggleTopupPanel(false)}
-            />
-            <TariffFormDialog
-              open={isTariffDialogOpen}
-              onOpenChange={setIsTariffDialogOpen}
             />
             
           </main>

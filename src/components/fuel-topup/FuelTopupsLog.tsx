@@ -368,8 +368,13 @@ export const FuelTopupsLog: React.FC<FuelTopupsLogProps> = ({
                           <TableHeader>
                             <TableRow className="border-b border-dotted">
                               <TableHead style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>Date</TableHead>
+                              <TableHead style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>Retailer</TableHead>
+                              <TableHead style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>Location</TableHead>
+                              <TableHead style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>Grade</TableHead>
                               <TableHead style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>Litres</TableHead>
                               <TableHead style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>Cost/Litre</TableHead>
+                              <TableHead style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>Net Price</TableHead>
+                              <TableHead style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>VAT</TableHead>
                               <TableHead style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>Total Cost</TableHead>
                               <TableHead style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>Mileage</TableHead>
                               <TableHead style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>Fuel Type</TableHead>
@@ -382,11 +387,33 @@ export const FuelTopupsLog: React.FC<FuelTopupsLogProps> = ({
                               return (
                                 <TableRow key={topup.id}>
                                   <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>{formatDate(topup.date)}</TableCell>
+                                  <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>{topup.retailer || '-'}</TableCell>
+                                  <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>
+                                    {topup.locationName ? (
+                                      <div className="text-xs">
+                                        <div className="font-medium">{topup.locationName}</div>
+                                        {topup.address && (
+                                          <div className="text-muted-foreground truncate max-w-[200px]" title={topup.address}>
+                                            {topup.address}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : '-'}
+                                  </TableCell>
+                                  <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>
+                                    {topup.fuelGrade ? topup.fuelGrade.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) : '-'}
+                                  </TableCell>
                                   <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>{topup.litres.toFixed(2)} L</TableCell>
                                   <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>£{topup.costPerLitre.toFixed(2)}</TableCell>
+                                  <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>
+                                    {topup.netPrice ? `£${topup.netPrice.toFixed(2)}` : '-'}
+                                  </TableCell>
+                                  <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>
+                                    {topup.vatAmount ? `£${topup.vatAmount.toFixed(2)}${topup.vatRate ? ` (${topup.vatRate}%)` : ''}` : '-'}
+                                  </TableCell>
                                   <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>£{topup.totalCost.toFixed(2)}</TableCell>
                                   <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>{topup.mileage ? `${topup.mileage.toLocaleString()}` : '-'}</TableCell>
-                                  <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>{topup.fuelType}</TableCell>
+                                  <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>{topup.fuelType || '-'}</TableCell>
                                   <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>
                                     <span className="text-xs uppercase tracking-normal font-mono">
                                       {topup.type === "MANUAL" ? (
@@ -537,8 +564,41 @@ export const FuelTopupsLog: React.FC<FuelTopupsLogProps> = ({
                   </div>
                   <div>
                     <label className="text-xs  text-muted-foreground">Fuel Type</label>
-                    <p className="text-xs">{selectedTopup.fuelType}</p>
+                    <p className="text-xs">{selectedTopup.fuelType || '-'}</p>
                   </div>
+                  {selectedTopup.retailer && (
+                    <div>
+                      <label className="text-xs  text-muted-foreground">Retailer</label>
+                      <p className="text-xs">{selectedTopup.retailer}</p>
+                    </div>
+                  )}
+                  {selectedTopup.locationName && (
+                    <div>
+                      <label className="text-xs  text-muted-foreground">Location</label>
+                      <p className="text-xs font-medium">{selectedTopup.locationName}</p>
+                      {selectedTopup.address && (
+                        <p className="text-xs text-muted-foreground">{selectedTopup.address}</p>
+                      )}
+                    </div>
+                  )}
+                  {selectedTopup.fuelGrade && (
+                    <div>
+                      <label className="text-xs  text-muted-foreground">Fuel Grade</label>
+                      <p className="text-xs">{selectedTopup.fuelGrade.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}</p>
+                    </div>
+                  )}
+                  {selectedTopup.netPrice && (
+                    <div>
+                      <label className="text-xs  text-muted-foreground">Net Price</label>
+                      <p className="text-xs">£{selectedTopup.netPrice.toFixed(2)}</p>
+                    </div>
+                  )}
+                  {selectedTopup.vatAmount && (
+                    <div>
+                      <label className="text-xs  text-muted-foreground">VAT Amount</label>
+                      <p className="text-xs">£{selectedTopup.vatAmount.toFixed(2)}{selectedTopup.vatRate ? ` (${selectedTopup.vatRate}%)` : ''}</p>
+                    </div>
+                  )}
                   {selectedTopup.mileage && (
                     <div>
                       <label className="text-xs  text-muted-foreground">Mileage</label>

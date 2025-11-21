@@ -5,11 +5,21 @@ export interface FuelTopup {
   vehicleId: string; // Vehicle identifier (replaces meterId)
   litres: number; // Litres of fuel added
   costPerLitre: number; // Cost per litre in currency
-  totalCost: number; // Total cost for this topup (litres * costPerLitre)
+  totalCost: number; // Total cost for this topup (litres * costPerLitre, includes VAT)
   mileage?: number; // Optional mileage at time of topup
   date: Date;
   type: 'MANUAL' | 'IMPORTED' | 'ESTIMATED';
   fuelType?: 'PETROL' | 'DIESEL' | 'ELECTRIC' | 'HYBRID'; // Type of fuel
+  retailer?: string; // Fuel retailer (e.g., "Sainsbury's", "BP", "Shell", "Tesco", "Asda", "Morrisons", "Esso", "Texaco", "TotalEnergies", "Costco")
+  fuelGrade?: 'UNLEADED' | 'SUPER_UNLEADED' | 'PREMIUM_DIESEL' | 'STANDARD_DIESEL'; // Fuel grade
+  vatRate?: number; // VAT rate percentage (e.g., 20.00)
+  netPrice?: number; // Net price before VAT
+  vatAmount?: number; // VAT amount
+  locationName?: string; // Location name from Google Maps (e.g., "Sainsbury's Chertsey")
+  address?: string; // Full address from Google Maps
+  latitude?: number; // Latitude coordinate
+  longitude?: number; // Longitude coordinate
+  placeId?: string; // Google Maps Place ID
   notes?: string;
   // Derived fields for analytics; may be absent depending on source
   consumption?: number; // Litres consumed since last topup (if mileage tracked)
@@ -89,6 +99,16 @@ export interface FuelTopupForm {
   mileage?: number; // Optional
   date: Date;
   fuelType?: 'PETROL' | 'DIESEL' | 'ELECTRIC' | 'HYBRID';
+  retailer?: string;
+  fuelGrade?: 'UNLEADED' | 'SUPER_UNLEADED' | 'PREMIUM_DIESEL' | 'STANDARD_DIESEL';
+  vatRate?: number;
+  netPrice?: number;
+  vatAmount?: number;
+  locationName?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  placeId?: string;
   notes?: string;
 }
 

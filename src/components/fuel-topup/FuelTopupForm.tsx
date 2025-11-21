@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/form";
 import { useFuelStore } from '../../store/useFuelStore';
 import { cn } from '@/lib/utils';
+import { getRetailerList } from '@/services/fuelPriceService';
 
 /**
  * FuelTopupForm Component
@@ -77,6 +78,26 @@ const fuelTopupSchema = z.object({
       message: 'Date cannot be in the future'
     }),
   fuelType: z.enum(['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID']).optional(),
+  retailer: z.string().optional(),
+  fuelGrade: z.enum(['UNLEADED', 'SUPER_UNLEADED', 'PREMIUM_DIESEL', 'STANDARD_DIESEL']).optional(),
+  vatRate: z
+    .number({ message: 'VAT rate must be a number' })
+    .min(0, 'VAT rate must be 0 or greater')
+    .max(100, 'VAT rate must be 100 or less')
+    .optional(),
+  netPrice: z
+    .number({ message: 'Net price must be a number' })
+    .nonnegative('Net price must be positive')
+    .optional(),
+  vatAmount: z
+    .number({ message: 'VAT amount must be a number' })
+    .nonnegative('VAT amount must be positive')
+    .optional(),
+  locationName: z.string().optional(),
+  address: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  placeId: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -93,6 +114,13 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess }) => {
   const [showFirstTopupCheckbox, setShowFirstTopupCheckbox] = useState(false);
   const [isFirstTopup, setIsFirstTopup] = useState(false);
   const [trackMileage, setTrackMileage] = useState(false);
+  
+  // Get retailer list for dropdown
+  const retailerList = getRetailerList();
+  
+  // Google Maps Places Autocomplete state
+  const [autocomplete, setAutocomplete] = useState<any>(null);
+  const [locationInput, setLocationInput] = useState('');
   
   // Get last topup for mileage reference
   const getLastTopup = React.useCallback(() => {
@@ -119,14 +147,51 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess }) => {
         return today;
       })(),
       fuelType: 'PETROL',
+      vatRate: 20.00, // UK standard VAT rate
       notes: '',
     },
   });
 
-  // Watch litres and costPerLitre to calculate total cost
+  // Watch form values for calculations
   const litres = form.watch('litres');
   const costPerLitre = form.watch('costPerLitre');
-  const totalCost = litres && costPerLitre ? (litres * costPerLitre).toFixed(2) : '0.00';
+  const vatRate = form.watch('vatRate') || 20.00;
+  const netPrice = form.watch('netPrice');
+  const vatAmount = form.watch('vatAmount');
+  
+  // Calculate total cost and VAT
+  // If netPrice is provided, calculate VAT and total
+  // Otherwise, if totalCost is provided, calculate netPrice and VAT
+  // Otherwise, calculate from litres * costPerLitre
+  const calculatedTotalCost = useMemo(() => {
+    if (netPrice !== undefined && netPrice !== null) {
+      const vat = netPrice * (vatRate / 100);
+      return netPrice + vat;
+    }
+    if (litres && costPerLitre) {
+      return litres * costPerLitre;
+    }
+    return 0;
+  }, [litres, costPerLitre, netPrice, vatRate]);
+
+  const calculatedNetPrice = useMemo(() => {
+    if (netPrice !== undefined && netPrice !== null) {
+      return netPrice;
+    }
+    if (calculatedTotalCost > 0) {
+      return calculatedTotalCost / (1 + vatRate / 100);
+    }
+    return 0;
+  }, [calculatedTotalCost, netPrice, vatRate]);
+
+  const calculatedVatAmount = useMemo(() => {
+    if (vatAmount !== undefined && vatAmount !== null) {
+      return vatAmount;
+    }
+    return calculatedTotalCost - calculatedNetPrice;
+  }, [calculatedTotalCost, calculatedNetPrice, vatAmount]);
+
+  const totalCost = calculatedTotalCost.toFixed(2);
 
   // Check if there's already a first topup in the system
   useEffect(() => {
@@ -141,6 +206,51 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess }) => {
     }
   }, [lastTopup, trackMileage, form]);
 
+  // Load Google Maps API script
+  useEffect(() => {
+    const loadGoogleMapsScript = () => {
+      // Check if already loaded
+      if (window.google && window.google.maps && window.google.maps.places) {
+        return;
+      }
+
+      // Check if script is already being loaded
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+      if (existingScript) {
+        return;
+      }
+
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      if (!apiKey) {
+        console.warn('Google Maps API key not found. Set VITE_GOOGLE_MAPS_API_KEY environment variable.');
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        console.log('Google Maps API loaded');
+      };
+      script.onerror = () => {
+        console.error('Failed to load Google Maps API');
+      };
+      document.head.appendChild(script);
+    };
+
+    loadGoogleMapsScript();
+  }, []);
+
+  // Cleanup Google Maps Autocomplete on unmount
+  useEffect(() => {
+    return () => {
+      if (autocomplete && window.google) {
+        window.google.maps.event.clearInstanceListeners(autocomplete);
+      }
+    };
+  }, [autocomplete]);
+
   // Form submission handler
   const onSubmit = async (data: FuelTopupFormData) => {
     try {
@@ -148,11 +258,21 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess }) => {
         vehicleId: 'vehicle-1',
         litres: data.litres,
         costPerLitre: data.costPerLitre,
-        totalCost: data.litres * data.costPerLitre,
+        totalCost: calculatedTotalCost,
         mileage: trackMileage && data.mileage ? data.mileage : undefined,
         date: data.date,
         type: 'MANUAL',
         fuelType: data.fuelType,
+        retailer: data.retailer,
+        locationName: data.locationName,
+        address: data.address,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        placeId: data.placeId,
+        fuelGrade: data.fuelGrade,
+        vatRate: data.vatRate,
+        netPrice: calculatedNetPrice > 0 ? calculatedNetPrice : undefined,
+        vatAmount: calculatedVatAmount > 0 ? calculatedVatAmount : undefined,
         notes: data.notes || '',
         isFirstTopup: isFirstTopup,
       });
@@ -249,6 +369,229 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess }) => {
             </FormItem>
           )}
         />
+
+        {/* Retailer */}
+        <FormField
+          control={form.control}
+          name="retailer"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Retailer (Optional)</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || ''}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select retailer" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {retailerList.map((retailer) => (
+                    <SelectItem key={retailer} value={retailer}>
+                      {retailer}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Fuel Grade - depends on fuelType */}
+        {form.watch('fuelType') === 'PETROL' && (
+          <FormField
+            control={form.control}
+            name="fuelGrade"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Fuel Grade (Optional)</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select fuel grade" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="UNLEADED">Unleaded</SelectItem>
+                    <SelectItem value="SUPER_UNLEADED">Super Unleaded</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        {form.watch('fuelType') === 'DIESEL' && (
+          <FormField
+            control={form.control}
+            name="fuelGrade"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Fuel Grade (Optional)</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select fuel grade" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="STANDARD_DIESEL">Standard Diesel</SelectItem>
+                    <SelectItem value="PREMIUM_DIESEL">Premium Diesel</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {/* VAT Section */}
+        <div className="space-y-4 border-t pt-4">
+          <h3 className="text-sm font-medium">VAT & Pricing</h3>
+          
+          <FormField
+            control={form.control}
+            name="vatRate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>VAT Rate (%)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="20.00"
+                    {...field}
+                    value={field.value || 20.00}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                      field.onChange(isNaN(value || 0) ? 20.00 : value);
+                    }}
+                  />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  UK standard VAT rate is 20%
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="netPrice"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Net Price (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="Auto-calculated"
+                    {...field}
+                    value={field.value || ''}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                      field.onChange(isNaN(value || 0) ? undefined : value);
+                    }}
+                  />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  Price before VAT. Leave empty to calculate from total cost.
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Display calculated values */}
+          <div className="space-y-2 p-3 bg-muted/50 rounded-md">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Net Price:</span>
+              <span className="font-medium">£{calculatedNetPrice.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">VAT Amount:</span>
+              <span className="font-medium">£{calculatedVatAmount.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm font-semibold border-t pt-2">
+              <span>Total Cost:</span>
+              <span>£{totalCost}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Location - Google Maps Places Autocomplete */}
+        <div className="space-y-4 border-t pt-4">
+          <h3 className="text-sm font-medium">Location (Optional)</h3>
+          
+          <FormField
+            control={form.control}
+            name="locationName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Location</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      id="location-autocomplete"
+                      type="text"
+                      placeholder="Search for location (e.g., Sainsbury Chertsey)"
+                      value={locationInput}
+                      onChange={(e) => {
+                        setLocationInput(e.target.value);
+                        field.onChange(e.target.value);
+                      }}
+                      onFocus={() => {
+                        // Initialize Google Maps Autocomplete if not already done
+                        if (window.google && window.google.maps && window.google.maps.places && !autocomplete) {
+                          const input = document.getElementById('location-autocomplete') as HTMLInputElement;
+                          if (input) {
+                            const autocompleteInstance = new window.google.maps.places.Autocomplete(input, {
+                              types: ['establishment', 'geocode'],
+                              fields: ['name', 'formatted_address', 'geometry', 'place_id'],
+                            });
+                            
+                            autocompleteInstance.addListener('place_changed', () => {
+                              const place = autocompleteInstance.getPlace();
+                              if (place.geometry && place.geometry.location) {
+                                const locationName = place.name || '';
+                                const address = place.formatted_address || '';
+                                const lat = place.geometry.location.lat();
+                                const lng = place.geometry.location.lng();
+                                const placeId = place.place_id || '';
+                                
+                                setLocationInput(locationName);
+                                form.setValue('locationName', locationName);
+                                form.setValue('address', address);
+                                form.setValue('latitude', lat);
+                                form.setValue('longitude', lng);
+                                form.setValue('placeId', placeId);
+                              }
+                            });
+                            
+                            setAutocomplete(autocompleteInstance);
+                          }
+                        }
+                      }}
+                    />
+                    {form.watch('address') && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {form.watch('address')}
+                      </p>
+                    )}
+                  </div>
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  Start typing to search for locations using Google Maps
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* Mileage Tracking Toggle */}
         <div className="flex items-center space-x-2">

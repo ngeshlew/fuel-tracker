@@ -19,6 +19,11 @@ router.get('/', async (_req, res, next) => {
       costPerLitre: Number(topup.costPerLitre),
       totalCost: Number(topup.totalCost),
       mileage: topup.mileage ? Number(topup.mileage) : undefined,
+      vatRate: topup.vatRate ? Number(topup.vatRate) : undefined,
+      netPrice: topup.netPrice ? Number(topup.netPrice) : undefined,
+      vatAmount: topup.vatAmount ? Number(topup.vatAmount) : undefined,
+      latitude: topup.latitude ? Number(topup.latitude) : undefined,
+      longitude: topup.longitude ? Number(topup.longitude) : undefined,
     }));
 
     res.json({
@@ -50,6 +55,11 @@ router.get('/:id', async (req, res, next) => {
       costPerLitre: Number(topup.costPerLitre),
       totalCost: Number(topup.totalCost),
       mileage: topup.mileage ? Number(topup.mileage) : undefined,
+      vatRate: topup.vatRate ? Number(topup.vatRate) : undefined,
+      netPrice: topup.netPrice ? Number(topup.netPrice) : undefined,
+      vatAmount: topup.vatAmount ? Number(topup.vatAmount) : undefined,
+      latitude: topup.latitude ? Number(topup.latitude) : undefined,
+      longitude: topup.longitude ? Number(topup.longitude) : undefined,
     };
 
     res.json({
@@ -73,6 +83,11 @@ router.post('/', async (req, res, next) => {
       date: z.string().refine((s) => !Number.isNaN(Date.parse(s)), 'Invalid date'),
       type: z.enum(['MANUAL', 'IMPORTED', 'ESTIMATED']).optional(),
       fuelType: z.enum(['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID']).optional(),
+      retailer: z.string().optional(),
+      fuelGrade: z.enum(['UNLEADED', 'SUPER_UNLEADED', 'PREMIUM_DIESEL', 'STANDARD_DIESEL']).optional(),
+      vatRate: z.number().min(0).max(100).optional(),
+      netPrice: z.number().nonnegative().optional(),
+      vatAmount: z.number().nonnegative().optional(),
       notes: z.string().optional(),
       isFirstTopup: z.boolean().optional()
     });
@@ -91,6 +106,16 @@ router.post('/', async (req, res, next) => {
         date: new Date(parsed.date),
         type: parsed.type ?? 'MANUAL',
         fuelType: parsed.fuelType ?? null,
+        retailer: parsed.retailer ?? null,
+        fuelGrade: parsed.fuelGrade ?? null,
+        vatRate: parsed.vatRate ? Number(parsed.vatRate) : null,
+        netPrice: parsed.netPrice ? Number(parsed.netPrice) : null,
+        vatAmount: parsed.vatAmount ? Number(parsed.vatAmount) : null,
+        locationName: parsed.locationName ?? null,
+        address: parsed.address ?? null,
+        latitude: parsed.latitude ? Number(parsed.latitude) : null,
+        longitude: parsed.longitude ? Number(parsed.longitude) : null,
+        placeId: parsed.placeId ?? null,
         notes: parsed.notes ?? null,
         isFirstTopup: parsed.isFirstTopup ?? false
       }
@@ -103,6 +128,9 @@ router.post('/', async (req, res, next) => {
       costPerLitre: Number(newTopup.costPerLitre),
       totalCost: Number(newTopup.totalCost),
       mileage: newTopup.mileage ? Number(newTopup.mileage) : undefined,
+      vatRate: newTopup.vatRate ? Number(newTopup.vatRate) : undefined,
+      netPrice: newTopup.netPrice ? Number(newTopup.netPrice) : undefined,
+      vatAmount: newTopup.vatAmount ? Number(newTopup.vatAmount) : undefined,
     };
 
     // Emit real-time update
@@ -148,6 +176,11 @@ router.put('/:id', async (req, res, next) => {
       date: z.string().refine((s) => !Number.isNaN(Date.parse(s)), 'Invalid date').optional(),
       type: z.enum(['MANUAL', 'IMPORTED', 'ESTIMATED']).optional(),
       fuelType: z.enum(['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID']).optional(),
+      retailer: z.string().optional(),
+      fuelGrade: z.enum(['UNLEADED', 'SUPER_UNLEADED', 'PREMIUM_DIESEL', 'STANDARD_DIESEL']).optional(),
+      vatRate: z.number().min(0).max(100).optional(),
+      netPrice: z.number().nonnegative().optional(),
+      vatAmount: z.number().nonnegative().optional(),
       notes: z.string().optional(),
       isFirstTopup: z.boolean().optional()
     });
@@ -174,6 +207,16 @@ router.put('/:id', async (req, res, next) => {
         ...(parsed.date && { date: new Date(parsed.date) }),
         ...(parsed.type && { type: parsed.type }),
         ...(parsed.fuelType !== undefined && { fuelType: parsed.fuelType ?? null }),
+        ...(parsed.retailer !== undefined && { retailer: parsed.retailer ?? null }),
+        ...(parsed.fuelGrade !== undefined && { fuelGrade: parsed.fuelGrade ?? null }),
+        ...(parsed.vatRate !== undefined && { vatRate: parsed.vatRate ? Number(parsed.vatRate) : null }),
+        ...(parsed.netPrice !== undefined && { netPrice: parsed.netPrice ? Number(parsed.netPrice) : null }),
+        ...(parsed.vatAmount !== undefined && { vatAmount: parsed.vatAmount ? Number(parsed.vatAmount) : null }),
+        ...(parsed.locationName !== undefined && { locationName: parsed.locationName ?? null }),
+        ...(parsed.address !== undefined && { address: parsed.address ?? null }),
+        ...(parsed.latitude !== undefined && { latitude: parsed.latitude ? Number(parsed.latitude) : null }),
+        ...(parsed.longitude !== undefined && { longitude: parsed.longitude ? Number(parsed.longitude) : null }),
+        ...(parsed.placeId !== undefined && { placeId: parsed.placeId ?? null }),
         ...(parsed.notes !== undefined && { notes: parsed.notes ?? null }),
         ...(parsed.isFirstTopup !== undefined && { isFirstTopup: parsed.isFirstTopup })
       }
@@ -186,6 +229,9 @@ router.put('/:id', async (req, res, next) => {
       costPerLitre: Number(updatedTopup.costPerLitre),
       totalCost: Number(updatedTopup.totalCost),
       mileage: updatedTopup.mileage ? Number(updatedTopup.mileage) : undefined,
+      vatRate: updatedTopup.vatRate ? Number(updatedTopup.vatRate) : undefined,
+      netPrice: updatedTopup.netPrice ? Number(updatedTopup.netPrice) : undefined,
+      vatAmount: updatedTopup.vatAmount ? Number(updatedTopup.vatAmount) : undefined,
     };
 
     // Emit real-time update

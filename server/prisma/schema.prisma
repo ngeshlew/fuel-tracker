@@ -20,6 +20,16 @@ model FuelTopup {
   date          DateTime
   type          TopupType
   fuelType      FuelType? @map("fuel_type")
+  retailer      String?  @map("retailer")
+  fuelGrade     FuelGrade? @map("fuel_grade")
+  vatRate       Decimal? @map("vat_rate")
+  netPrice      Decimal? @map("net_price")
+  vatAmount     Decimal? @map("vat_amount")
+  locationName  String?  @map("location_name")
+  address       String?  @map("address")
+  latitude      Decimal? @map("latitude")
+  longitude     Decimal? @map("longitude")
+  placeId       String?  @map("place_id")
   notes         String?
   isFirstTopup  Boolean  @default(false) @map("is_first_topup")
   createdAt     DateTime @default(now()) @map("created_at")
@@ -82,6 +92,13 @@ enum FuelType {
   DIESEL
   ELECTRIC
   HYBRID
+}
+
+enum FuelGrade {
+  UNLEADED
+  SUPER_UNLEADED
+  PREMIUM_DIESEL
+  STANDARD_DIESEL
 }
 
 enum PeriodType {
