@@ -126,7 +126,14 @@ export const WeeklyPieChart: React.FC<WeeklyPieChartProps> = ({ currentMonth, vi
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percentage }: WeeklyData) => `${name}: ${percentage}%`}
+              label={(props: { index?: number }) => {
+                // Use index to safely access data from weeklyData array
+                if (props.index !== undefined && weeklyData[props.index]) {
+                  const entry = weeklyData[props.index];
+                  return `${entry.name}: ${entry.percentage}%`;
+                }
+                return '';
+              }}
               outerRadius={80}
               fill="#8884d8"
               dataKey={viewMode === 'kwh' ? 'litres' : 'cost'}
