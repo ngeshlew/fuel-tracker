@@ -119,6 +119,35 @@ router.get('/summary', async (req, res, next) => {
       else if (difference < -threshold) trend = 'decreasing';
     }
 
+    // Calculate average efficiency (miles per litre)
+    let averageEfficiency: number | undefined = undefined;
+    if (topups.length > 1) {
+      let totalEfficiency = 0;
+      let efficiencyCount = 0;
+      for (let i = 1; i < topups.length; i++) {
+        const prev = topups[i - 1];
+        const curr = topups[i];
+        if (!prev || !curr || !prev.mileage || !curr.mileage) continue;
+        const prevMileage = typeof (prev.mileage as any).toNumber === "function"
+          ? (prev.mileage as any).toNumber()
+          : Number(prev.mileage as unknown as number);
+        const currMileage = typeof (curr.mileage as any).toNumber === "function"
+          ? (curr.mileage as any).toNumber()
+          : Number(curr.mileage as unknown as number);
+        const litres = typeof (curr.litres as any).toNumber === "function"
+          ? (curr.litres as any).toNumber()
+          : Number(curr.litres as unknown as number);
+        const milesDriven = currMileage - prevMileage;
+        if (milesDriven > 0 && litres > 0) {
+          totalEfficiency += milesDriven / litres;
+          efficiencyCount++;
+        }
+      }
+      if (efficiencyCount > 0) {
+        averageEfficiency = totalEfficiency / efficiencyCount;
+      }
+    }
+
         res.json({
           success: true,
           data: {

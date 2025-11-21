@@ -88,6 +88,11 @@ router.post('/', async (req, res, next) => {
       vatRate: z.number().min(0).max(100).optional(),
       netPrice: z.number().nonnegative().optional(),
       vatAmount: z.number().nonnegative().optional(),
+      locationName: z.string().optional(),
+      address: z.string().optional(),
+      latitude: z.number().optional(),
+      longitude: z.number().optional(),
+      placeId: z.string().optional(),
       notes: z.string().optional(),
       isFirstTopup: z.boolean().optional()
     });
@@ -178,6 +183,11 @@ router.put('/:id', async (req, res, next) => {
       fuelType: z.enum(['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID']).optional(),
       retailer: z.string().optional(),
       fuelGrade: z.enum(['UNLEADED', 'SUPER_UNLEADED', 'PREMIUM_DIESEL', 'STANDARD_DIESEL']).optional(),
+      locationName: z.string().optional(),
+      address: z.string().optional(),
+      latitude: z.number().optional(),
+      longitude: z.number().optional(),
+      placeId: z.string().optional(),
       vatRate: z.number().min(0).max(100).optional(),
       netPrice: z.number().nonnegative().optional(),
       vatAmount: z.number().nonnegative().optional(),
