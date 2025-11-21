@@ -27,6 +27,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useFuelStore } from '../../store/useFuelStore';
+import { FuelTopup } from '../../types';
 import { cn } from '@/lib/utils';
 import { getRetailerList } from '@/services/fuelPriceService';
 
@@ -105,10 +106,12 @@ type FuelTopupFormData = z.infer<typeof fuelTopupSchema>;
 
 interface FuelTopupFormProps {
   onSuccess: () => void;
+  initialData?: FuelTopup;
 }
 
-export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess }) => {
-  const { addTopup, isLoading, topups } = useFuelStore();
+export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initialData }) => {
+  const { addTopup, updateTopup, isLoading, topups } = useFuelStore();
+  const isEditing = !!initialData;
   
   // State for first topup checkbox - only show if no first topup exists
   const [showFirstTopupCheckbox, setShowFirstTopupCheckbox] = useState(false);
@@ -254,33 +257,60 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess }) => {
   // Form submission handler
   const onSubmit = async (data: FuelTopupFormData) => {
     try {
-      await addTopup({
-        vehicleId: 'vehicle-1',
-        litres: data.litres,
-        costPerLitre: data.costPerLitre,
-        totalCost: calculatedTotalCost,
-        mileage: trackMileage && data.mileage ? data.mileage : undefined,
-        date: data.date,
-        type: 'MANUAL',
-        fuelType: data.fuelType,
-        retailer: data.retailer,
-        locationName: data.locationName,
-        address: data.address,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        placeId: data.placeId,
-        fuelGrade: data.fuelGrade,
-        vatRate: data.vatRate,
-        netPrice: calculatedNetPrice > 0 ? calculatedNetPrice : undefined,
-        vatAmount: calculatedVatAmount > 0 ? calculatedVatAmount : undefined,
-        notes: data.notes || '',
-        isFirstTopup: isFirstTopup,
-      });
+      if (isEditing && initialData) {
+        // Update existing topup
+        await updateTopup(initialData.id, {
+          vehicleId: initialData.vehicleId,
+          litres: data.litres,
+          costPerLitre: data.costPerLitre,
+          totalCost: calculatedTotalCost,
+          mileage: trackMileage && data.mileage ? data.mileage : undefined,
+          date: data.date,
+          type: initialData.type || 'MANUAL',
+          fuelType: data.fuelType,
+          retailer: data.retailer,
+          locationName: data.locationName,
+          address: data.address,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          placeId: data.placeId,
+          fuelGrade: data.fuelGrade,
+          vatRate: data.vatRate,
+          netPrice: calculatedNetPrice > 0 ? calculatedNetPrice : undefined,
+          vatAmount: calculatedVatAmount > 0 ? calculatedVatAmount : undefined,
+          notes: data.notes || '',
+          isFirstTopup: initialData.isFirstTopup || false,
+        });
+      } else {
+        // Create new topup
+        await addTopup({
+          vehicleId: 'vehicle-1',
+          litres: data.litres,
+          costPerLitre: data.costPerLitre,
+          totalCost: calculatedTotalCost,
+          mileage: trackMileage && data.mileage ? data.mileage : undefined,
+          date: data.date,
+          type: 'MANUAL',
+          fuelType: data.fuelType,
+          retailer: data.retailer,
+          locationName: data.locationName,
+          address: data.address,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          placeId: data.placeId,
+          fuelGrade: data.fuelGrade,
+          vatRate: data.vatRate,
+          netPrice: calculatedNetPrice > 0 ? calculatedNetPrice : undefined,
+          vatAmount: calculatedVatAmount > 0 ? calculatedVatAmount : undefined,
+          notes: data.notes || '',
+          isFirstTopup: isFirstTopup,
+        });
+      }
       
       form.reset();
       onSuccess();
     } catch (error) {
-      console.error('Failed to add fuel topup:', error);
+      console.error(`Failed to ${isEditing ? 'update' : 'add'} fuel topup:`, error);
     }
   };
 
