@@ -1,4 +1,3 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
@@ -199,75 +198,6 @@ export const UKFuelPriceComparison: React.FC = () => {
                 <span className="text-muted-foreground">Premium Diesel:</span>
                 <span className="ml-2 font-mono">{formatPrice(ukAverages.premiumDiesel)}</span>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Retailer Price Comparison Chart */}
-        {retailers.length > 0 && userAverages && (
-          <div className="space-y-3 pt-4 border-t border-dotted border-border">
-            <div className="text-sm font-medium mb-3">Retailer Price Comparison Chart</div>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={retailers
-                    .filter(r => r.unleaded !== undefined || r.diesel !== undefined)
-                    .slice(0, 10)
-                    .map(retailer => ({
-                      name: retailer.retailer.length > 12 ? retailer.retailer.substring(0, 12) + '...' : retailer.retailer,
-                      retailer: retailer.retailer,
-                      unleaded: retailer.unleaded,
-                      diesel: retailer.diesel,
-                      ukAverage: ukAverages.unleaded,
-                      userAverage: userAverages.unleaded
-                    }))}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="name" 
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <YAxis 
-                    label={{ value: 'Price (pence/litre)', angle: -90, position: 'insideLeft' }}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <Tooltip 
-                    formatter={(value: number) => `${value?.toFixed(1)}p`}
-                    labelFormatter={(label) => {
-                    const data = retailers.find(r => {
-                      const shortName = r.retailer.length > 12 ? r.retailer.substring(0, 12) + "..." : r.retailer;
-                      return shortName === label || r.retailer === label;
-                    });
-                    return data?.retailer || label;
-                  }}
-                  />
-                  <Legend />
-                  {userAverages.unleaded && (
-                    <Bar 
-                      dataKey="userAverage" 
-                      fill="hsl(var(--primary))" 
-                      name="Your Average"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  )}
-                  <Bar 
-                    dataKey="ukAverage" 
-                    fill="hsl(var(--muted-foreground))" 
-                    name="UK Average"
-                    radius={[4, 4, 0, 0]}
-                  />
-                  <Bar 
-                    dataKey="unleaded" 
-                    fill="hsl(var(--accent))" 
-                    name="Retailer Price"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
             </div>
           </div>
         )}
