@@ -91,13 +91,15 @@ export const useFuelStore = create<FuelState>()(
           // Calculate totalCost if not provided
           const totalCost = topupData.totalCost ?? (topupData.litres * topupData.costPerLitre);
           
-          // Check for duplicate topups
+          // Check for duplicate topups (only check MANUAL topups, ignore ESTIMATED)
           const { topups } = get();
+          // Filter out ESTIMATED topups for duplicate checking
+          const manualTopups = topups.filter(t => t.type !== 'ESTIMATED');
           // Ensure dates are Date objects for comparison
           const topupDate = topupData.date instanceof Date 
             ? topupData.date 
             : new Date(topupData.date);
-          const isDuplicate = topups.some(topup => {
+          const isDuplicate = manualTopups.some(topup => {
             const existingDate = topup.date instanceof Date 
               ? topup.date 
               : new Date(topup.date);
@@ -149,8 +151,16 @@ export const useFuelStore = create<FuelState>()(
             // Remove any estimated topups for the same date before generating new ones
             await get().removeEstimatedTopups(topupData.date);
             
-            // Generate estimated topups and recalculate analytics data
-            await get().generateEstimatedTopups();
+            // DISABLED: Generate estimated topups and recalculate analytics data
+            // await get().generateEstimatedTopups();
+            
+            // Recalculate analytics data after state update
+            setTimeout(() => {
+              get().calculateConsumptionData();
+              get().calculateTimeSeriesData('daily');
+              get().calculatePieChartData();
+            }, 0);
+            
             useToastStore.getState().showToast('Topup added successfully', 'success');
           } catch (error) {
             // Fallback: Create topup locally if API fails
@@ -179,8 +189,16 @@ export const useFuelStore = create<FuelState>()(
             // Remove any estimated topups for the same date before generating new ones
             await get().removeEstimatedTopups(topupData.date);
             
-            // Generate estimated topups and recalculate analytics data
-            await get().generateEstimatedTopups();
+            // DISABLED: Generate estimated topups and recalculate analytics data
+            // await get().generateEstimatedTopups();
+            
+            // Recalculate analytics data
+            setTimeout(() => {
+              get().calculateConsumptionData();
+              get().calculateTimeSeriesData('daily');
+              get().calculatePieChartData();
+            }, 0);
+            
             useToastStore.getState().showToast('Topup added locally', 'success');
           }
         },
@@ -545,9 +563,8 @@ export const useFuelStore = create<FuelState>()(
               error: null,
             }));
 
-            // After removing an estimated topup, regenerate all estimated topups
-            // to ensure consistency and fill any gaps that might have been created
-            await get().generateEstimatedTopups();
+            // DISABLED: After removing an estimated topup, regenerate all estimated topups
+            // await get().generateEstimatedTopups();
             
             // Recalculate analytics data
             get().calculateConsumptionData();
@@ -586,14 +603,18 @@ export const useFuelStore = create<FuelState>()(
             );
             
             console.log('Setting topups in store:', sortedTopups.length);
+            
+            // Remove all ESTIMATED topups when loading data
+            const manualTopupsOnly = sortedTopups.filter(t => t.type !== 'ESTIMATED');
+            
             set({
-              topups: sortedTopups,
+              topups: manualTopupsOnly,
               isLoading: false,
               error: null,
             });
 
-            // Regenerate estimated topups to ensure continuity
-            await get().generateEstimatedTopups();
+            // DISABLED: Regenerate estimated topups to ensure continuity
+            // await get().generateEstimatedTopups();
             
             // Always recalculate analytics data after loading topups
             // Use setTimeout to ensure state is updated before calculating
@@ -723,14 +744,17 @@ export const useFuelStore = create<FuelState>()(
         calculateConsumptionData: () => {
           const { topups } = get();
           
+          // Filter out ESTIMATED topups - only use MANUAL topups for calculations
+          const manualTopups = topups.filter(t => t.type !== 'ESTIMATED');
+          
           // Handle edge cases: no topups or single topup
-          if (topups.length === 0) {
+          if (manualTopups.length === 0) {
             set({ chartData: [] });
             return;
           }
           
-          if (topups.length === 1) {
-            const singleTopup = topups[0];
+          if (manualTopups.length === 1) {
+            const singleTopup = manualTopups[0];
             if (singleTopup.isFirstTopup) {
               set({ 
                 chartData: [{
@@ -757,7 +781,7 @@ export const useFuelStore = create<FuelState>()(
           }
 
           // Explicitly sort topups by date to ensure chronological order
-          const sortedTopups = [...topups].sort((a, b) => 
+          const sortedTopups = [...manualTopups].sort((a, b) => 
             new Date(a.date).getTime() - new Date(b.date).getTime()
           );
 

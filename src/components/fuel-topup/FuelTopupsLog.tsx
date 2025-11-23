@@ -55,7 +55,7 @@ export const FuelTopupsLog: React.FC<FuelTopupsLogProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'ALL' | 'MANUAL' | 'ESTIMATED'>('ALL');
+  const [filterType, setFilterType] = useState<'ALL' | 'MANUAL' | 'ESTIMATED'>('MANUAL');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Keyboard shortcut: '/' to focus search

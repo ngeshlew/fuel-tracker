@@ -185,11 +185,11 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
   // Otherwise, if totalCost is provided, calculate netPrice and VAT
   // Otherwise, calculate from litres * costPerLitre
   const calculatedTotalCost = useMemo(() => {
-    if (netPrice !== undefined && netPrice !== null) {
-      const vat = netPrice * (vatRate / 100);
+    if (netPrice !== undefined && netPrice !== null && !isNaN(netPrice)) {
+      const vat = netPrice * ((vatRate || 0) / 100);
       return netPrice + vat;
     }
-    if (litres && costPerLitre) {
+    if (litres && costPerLitre && !isNaN(litres) && !isNaN(costPerLitre)) {
       return litres * costPerLitre;
     }
     return 0;
