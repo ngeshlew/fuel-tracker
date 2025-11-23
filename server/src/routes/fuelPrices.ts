@@ -1,5 +1,4 @@
 import express from 'express';
-import { createError } from '../middleware/errorHandler';
 
 const router = express.Router();
 
@@ -103,10 +102,19 @@ function parseRetailerData(retailer: string, data: any): RetailerPrice | null {
 
     const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : undefined;
 
-    result.unleaded = avg(prices.unleaded);
-    result.diesel = avg(prices.diesel);
-    result.superUnleaded = avg(prices.superUnleaded);
-    result.premiumDiesel = avg(prices.premiumDiesel);
+    // Only assign if value is defined (required by exactOptionalPropertyTypes)
+    const avgUnleaded = avg(prices.unleaded);
+    if (avgUnleaded !== undefined) result.unleaded = avgUnleaded;
+    
+    const avgDiesel = avg(prices.diesel);
+    if (avgDiesel !== undefined) result.diesel = avgDiesel;
+    
+    const avgSuperUnleaded = avg(prices.superUnleaded);
+    if (avgSuperUnleaded !== undefined) result.superUnleaded = avgSuperUnleaded;
+    
+    const avgPremiumDiesel = avg(prices.premiumDiesel);
+    if (avgPremiumDiesel !== undefined) result.premiumDiesel = avgPremiumDiesel;
+    
     result.lastUpdated = new Date().toISOString();
 
     if (result.unleaded !== undefined || result.diesel !== undefined || 
@@ -127,7 +135,7 @@ function parseRetailerData(retailer: string, data: any): RetailerPrice | null {
  * Fetches data from retailer APIs and calculates averages.
  * This endpoint proxies requests to avoid CORS issues.
  */
-router.get('/averages', async (_req, res, next) => {
+router.get('/averages', async (_req, res) => {
   try {
     const retailerPrices: RetailerPrice[] = [];
     const priceSums = {
@@ -181,10 +189,11 @@ router.get('/averages', async (_req, res, next) => {
     // Calculate averages if we have data
     if (retailerPrices.length === 0) {
       // Return default prices if no retailer data available
-      return res.json({
+      res.json({
         success: true,
         data: DEFAULT_PRICES,
       });
+      return;
     }
 
     const calculateAverage = (prices: number[]) => {
@@ -206,6 +215,7 @@ router.get('/averages', async (_req, res, next) => {
       success: true,
       data: averages,
     });
+    return;
   } catch (error) {
     console.error('Failed to fetch fuel prices:', error);
     // Return default prices on error
@@ -213,6 +223,7 @@ router.get('/averages', async (_req, res, next) => {
       success: true,
       data: DEFAULT_PRICES,
     });
+    return;
   }
 });
 
