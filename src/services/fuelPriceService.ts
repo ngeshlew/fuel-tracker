@@ -134,88 +134,53 @@ export async function getUKAveragePrices(): Promise<UKAveragePrices> {
 }
 
 /**
- * Fetch fuel price data from retailer APIs (UK Government Open Data Scheme)
+ * Fetch fuel price data from backend API (which proxies retailer API requests)
  * 
- * Fetches data from multiple retailers and calculates averages.
- * Each retailer may have different JSON structures, so we handle various formats.
+ * This avoids CORS issues by fetching through our backend server.
+ * The backend handles fetching from multiple retailers and calculating averages.
  */
 async function fetchRetailerData(): Promise<UKAveragePrices | null> {
-  const retailerPrices: RetailerPrice[] = [];
-  const priceSums = {
-    unleaded: [] as number[],
-    diesel: [] as number[],
-    superUnleaded: [] as number[],
-    premiumDiesel: [] as number[],
-  };
-
-  // Fetch from all retailers in parallel with timeout
-  const fetchPromises = Object.entries(RETAILER_ENDPOINTS).map(async ([retailer, url]) => {
-    try {
-      // Skip Shell as it's HTML, not JSON
-      if (retailer === 'Shell') {
-        return null;
+  try {
+    // Use the same smart URL detection as the main API service
+    const getApiBaseUrl = (): string => {
+      if (import.meta.env.VITE_SERVER_URL) {
+        return import.meta.env.VITE_SERVER_URL;
       }
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-      const response = await fetch(url, {
-        signal: controller.signal,
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        return null;
+      if (import.meta.env.DEV) {
+        return 'http://localhost:3001';
       }
+      return 'https://fuel-tracker.up.railway.app';
+    };
 
-      const data = await response.json();
-      const prices = parseRetailerData(retailer, data);
+    const apiBaseUrl = getApiBaseUrl();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout for aggregated request
 
-      if (prices) {
-        retailerPrices.push(prices);
+    const response = await fetch(`${apiBaseUrl}/api/fuel-prices/averages`, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
 
-        // Add to sums for averaging
-        if (prices.unleaded !== undefined) priceSums.unleaded.push(prices.unleaded);
-        if (prices.diesel !== undefined) priceSums.diesel.push(prices.diesel);
-        if (prices.superUnleaded !== undefined) priceSums.superUnleaded.push(prices.superUnleaded);
-        if (prices.premiumDiesel !== undefined) priceSums.premiumDiesel.push(prices.premiumDiesel);
-      }
+    clearTimeout(timeoutId);
 
-      return prices;
-    } catch (error) {
-      // Silently fail for individual retailers - we'll use what we can get
-      console.debug(`Failed to fetch from ${retailer}:`, error);
+    if (!response.ok) {
+      console.warn('Failed to fetch fuel prices from backend:', response.status, response.statusText);
       return null;
     }
-  });
 
-  await Promise.allSettled(fetchPromises);
+    const result = await response.json();
+    
+    if (result.success && result.data) {
+      return result.data as UKAveragePrices;
+    }
 
-  // Calculate averages if we have data
-  if (retailerPrices.length === 0) {
+    return null;
+  } catch (error) {
+    console.warn('Failed to fetch retailer fuel price data from backend:', error);
     return null;
   }
-
-  const calculateAverage = (prices: number[]) => {
-    if (prices.length === 0) return undefined;
-    return prices.reduce((sum, price) => sum + price, 0) / prices.length;
-  };
-
-  const averages: UKAveragePrices = {
-    unleaded: calculateAverage(priceSums.unleaded) ?? DEFAULT_PRICES.unleaded,
-    diesel: calculateAverage(priceSums.diesel) ?? DEFAULT_PRICES.diesel,
-    superUnleaded: calculateAverage(priceSums.superUnleaded) ?? DEFAULT_PRICES.superUnleaded,
-    premiumDiesel: calculateAverage(priceSums.premiumDiesel) ?? DEFAULT_PRICES.premiumDiesel,
-    lastUpdated: new Date().toISOString(),
-    source: 'RETAILER_AVERAGE',
-    retailers: retailerPrices,
-  };
-
-  return averages;
 }
 
 /**
