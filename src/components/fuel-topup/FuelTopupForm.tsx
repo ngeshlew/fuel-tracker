@@ -167,17 +167,17 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
       mileage: initialData.mileage ? (typeof initialData.mileage === 'number' ? initialData.mileage : Number(initialData.mileage)) : undefined,
       date: safeDateParse(initialData.date),
       fuelType: initialData.fuelType || 'PETROL',
-      retailer: initialData.retailer || '',
-      locationName: initialData.locationName || '',
-      address: initialData.address || '',
+      retailer: initialData.retailer || undefined,
+      locationName: initialData.locationName || undefined,
+      address: initialData.address || undefined,
       latitude: initialData.latitude ? (typeof initialData.latitude === 'number' ? initialData.latitude : Number(initialData.latitude)) : undefined,
       longitude: initialData.longitude ? (typeof initialData.longitude === 'number' ? initialData.longitude : Number(initialData.longitude)) : undefined,
-      placeId: initialData.placeId || '',
+      placeId: initialData.placeId || undefined,
       fuelGrade: initialData.fuelGrade || undefined,
       vatRate: initialData.vatRate ? (typeof initialData.vatRate === 'number' ? initialData.vatRate : Number(initialData.vatRate)) : undefined,
       netPrice: initialData.netPrice ? (typeof initialData.netPrice === 'number' ? initialData.netPrice : Number(initialData.netPrice)) : undefined,
       vatAmount: initialData.vatAmount ? (typeof initialData.vatAmount === 'number' ? initialData.vatAmount : Number(initialData.vatAmount)) : undefined,
-      notes: initialData.notes || '',
+      notes: initialData.notes || undefined,
     } : {
       litres: 50,
       costPerLitre: 1.50,
@@ -468,55 +468,71 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
         <FormField
           control={form.control}
           name="fuelType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Fuel Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select fuel type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="PETROL">Petrol</SelectItem>
-                  <SelectItem value="DIESEL">Diesel</SelectItem>
-                  <SelectItem value="ELECTRIC">Electric</SelectItem>
-                  <SelectItem value="HYBRID">Hybrid</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            // Ensure value is never empty string
+            const safeValue = field.value && field.value.trim() !== '' ? field.value : undefined;
+            return (
+              <FormItem>
+                <FormLabel>Fuel Type</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  value={safeValue || 'PETROL'} // Default to PETROL if undefined
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select fuel type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="PETROL">Petrol</SelectItem>
+                    <SelectItem value="DIESEL">Diesel</SelectItem>
+                    <SelectItem value="ELECTRIC">Electric</SelectItem>
+                    <SelectItem value="HYBRID">Hybrid</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         {/* Retailer */}
         <FormField
           control={form.control}
           name="retailer"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Retailer (Optional)</FormLabel>
-              <Select 
-                onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} 
-                value={field.value || undefined}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select retailer" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {retailerList.map((retailer) => (
-                    <SelectItem key={retailer} value={retailer}>
-                      {retailer}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            // Ensure value is never empty string
+            const safeValue = field.value && field.value.trim() !== '' ? field.value : undefined;
+            return (
+              <FormItem>
+                <FormLabel>Retailer (Optional)</FormLabel>
+                <Select 
+                  onValueChange={(value) => field.onChange(value)} 
+                  value={safeValue}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select retailer" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {retailerList
+                      .filter((retailer): retailer is string => {
+                        // Type guard to ensure retailer is a non-empty string
+                        return typeof retailer === 'string' && retailer.trim().length > 0;
+                      })
+                      .map((retailer) => (
+                        <SelectItem key={retailer} value={retailer}>
+                          {retailer}
+                        </SelectItem>
+                      ))}
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         {/* Fuel Grade - depends on fuelType */}
@@ -524,52 +540,60 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
           <FormField
             control={form.control}
             name="fuelGrade"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Fuel Grade (Optional)</FormLabel>
-                <Select 
-                  onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} 
-                  value={field.value || undefined}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select fuel grade" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="UNLEADED">Unleaded</SelectItem>
-                    <SelectItem value="SUPER_UNLEADED">Super Unleaded</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              // Ensure value is never empty string
+              const safeValue = field.value && field.value.trim() !== '' ? field.value : undefined;
+              return (
+                <FormItem>
+                  <FormLabel>Fuel Grade (Optional)</FormLabel>
+                  <Select 
+                    onValueChange={(value) => field.onChange(value)} 
+                    value={safeValue}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select fuel grade" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="UNLEADED">Unleaded</SelectItem>
+                      <SelectItem value="SUPER_UNLEADED">Super Unleaded</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         )}
         {form.watch('fuelType') === 'DIESEL' && (
           <FormField
             control={form.control}
             name="fuelGrade"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Fuel Grade (Optional)</FormLabel>
-                <Select 
-                  onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} 
-                  value={field.value || undefined}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select fuel grade" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="STANDARD_DIESEL">Standard Diesel</SelectItem>
-                    <SelectItem value="PREMIUM_DIESEL">Premium Diesel</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              // Ensure value is never empty string
+              const safeValue = field.value && field.value.trim() !== '' ? field.value : undefined;
+              return (
+                <FormItem>
+                  <FormLabel>Fuel Grade (Optional)</FormLabel>
+                  <Select 
+                    onValueChange={(value) => field.onChange(value)} 
+                    value={safeValue}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select fuel grade" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="STANDARD_DIESEL">Standard Diesel</SelectItem>
+                      <SelectItem value="PREMIUM_DIESEL">Premium Diesel</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         )}
 
