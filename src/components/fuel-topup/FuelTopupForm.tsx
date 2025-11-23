@@ -507,7 +507,10 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
               <FormItem>
                 <FormLabel>Retailer (Optional)</FormLabel>
                 <Select 
-                  onValueChange={(value) => field.onChange(value)} 
+                  onValueChange={(value) => {
+                    // Prevent empty strings from being set
+                    field.onChange(value && value.trim() !== '' ? value : undefined);
+                  }} 
                   value={safeValue}
                 >
                   <FormControl>
@@ -521,11 +524,18 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
                         // Type guard to ensure retailer is a non-empty string
                         return typeof retailer === 'string' && retailer.trim().length > 0;
                       })
-                      .map((retailer) => (
-                        <SelectItem key={retailer} value={retailer}>
-                          {retailer}
-                        </SelectItem>
-                      ))}
+                      .map((retailer) => {
+                        // Double-check: ensure no empty strings slip through
+                        if (!retailer || retailer.trim() === '') {
+                          return null;
+                        }
+                        return (
+                          <SelectItem key={retailer} value={retailer}>
+                            {retailer}
+                          </SelectItem>
+                        );
+                      })
+                      .filter(Boolean)}
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
