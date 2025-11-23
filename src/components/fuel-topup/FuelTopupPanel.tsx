@@ -24,9 +24,17 @@ export const FuelTopupPanel: React.FC<FuelTopupPanelProps> = ({
 }) => {
   const { toggleTopupPanel } = useFuelStore();
 
+  // Log panel state changes for debugging
+  React.useEffect(() => {
+    if (isOpen) {
+      console.log('[FuelTopupPanel] Panel opened', { hasTopupToEdit: !!topupToEdit });
+    }
+  }, [isOpen, topupToEdit]);
+
   return (
     <Sheet open={isOpen} onOpenChange={(open) => {
       if (!open) {
+        console.log('[FuelTopupPanel] Panel closing');
         onClose();
         toggleTopupPanel(false);
       }
@@ -39,7 +47,9 @@ export const FuelTopupPanel: React.FC<FuelTopupPanelProps> = ({
           </SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-6 pb-6 min-h-0">
-          <FuelTopupForm onSuccess={onClose} initialData={topupToEdit} />
+          {isOpen && (
+            <FuelTopupForm onSuccess={onClose} initialData={topupToEdit} />
+          )}
         </div>
       </SheetContent>
     </Sheet>

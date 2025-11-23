@@ -1,0 +1,99 @@
+{
+    "title": "Recording 11/23/2025 at 9:47:51 PM",
+    "steps": [
+        {
+            "type": "setViewport",
+            "width": 1428,
+            "height": 404,
+            "deviceScaleFactor": 1,
+            "isMobile": false,
+            "hasTouch": false,
+            "isLandscape": false
+        },
+        {
+            "type": "navigate",
+            "url": "https://fuel-tracker-up.netlify.app/",
+            "assertedEvents": [
+                {
+                    "type": "navigation",
+                    "url": "https://fuel-tracker-up.netlify.app/",
+                    "title": "Fuel Tracker - Fuel Consumption & Cost Analytics"
+                }
+            ]
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Add Topup"
+                ],
+                [
+                    "div.group\\/sidebar-wrapper button.bg-primary"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div[1]/div/div[3]/div/main/header/div/div/div[2]/button[3]"
+                ],
+                [
+                    "pierce/div.group\\/sidebar-wrapper button.bg-primary"
+                ],
+                [
+                    "text/Add TopupAdd"
+                ]
+            ],
+            "offsetY": 40,
+            "offsetX": 69
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Try Again"
+                ],
+                [
+                    "button.bg-primary"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/div/div[2]/div/button[1]"
+                ],
+                [
+                    "pierce/button.bg-primary"
+                ],
+                [
+                    "text/Try Again"
+                ]
+            ],
+            "offsetY": 28,
+            "offsetX": 141
+        },
+        {
+            "type": "click",
+            "target": "main",
+            "selectors": [
+                [
+                    "aria/Refresh Page"
+                ],
+                [
+                    "button.border"
+                ],
+                [
+                    "xpath///*[@id=\"root\"]/div/div/div[2]/div/button[2]"
+                ],
+                [
+                    "pierce/button.border"
+                ],
+                [
+                    "text/Refresh Page"
+                ]
+            ],
+            "offsetY": 35,
+            "offsetX": 80,
+            "assertedEvents": [
+                {
+                    "type": "navigation"
+                }
+            ]
+        }
+    ]
+}

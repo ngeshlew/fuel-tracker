@@ -139,13 +139,33 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
 
   // React Hook Form setup with validation
   const lastTopup = getLastTopup();
+  
+  // Safe date parsing helper
+  const safeDateParse = (dateValue: string | Date | undefined): Date => {
+    if (!dateValue) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return today;
+    }
+    if (dateValue instanceof Date) {
+      return dateValue;
+    }
+    try {
+      return new Date(dateValue);
+    } catch {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return today;
+    }
+  };
+
   const form = useForm<FuelTopupFormData>({
     resolver: zodResolver(fuelTopupSchema),
     defaultValues: initialData ? {
-      litres: typeof initialData.litres === 'number' ? initialData.litres : Number(initialData.litres),
-      costPerLitre: typeof initialData.costPerLitre === 'number' ? initialData.costPerLitre : Number(initialData.costPerLitre),
+      litres: typeof initialData.litres === 'number' ? initialData.litres : Number(initialData.litres) || 50,
+      costPerLitre: typeof initialData.costPerLitre === 'number' ? initialData.costPerLitre : Number(initialData.costPerLitre) || 1.50,
       mileage: initialData.mileage ? (typeof initialData.mileage === 'number' ? initialData.mileage : Number(initialData.mileage)) : undefined,
-      date: new Date(initialData.date),
+      date: safeDateParse(initialData.date),
       fuelType: initialData.fuelType || 'PETROL',
       retailer: initialData.retailer || '',
       locationName: initialData.locationName || '',
@@ -358,6 +378,30 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
       useToastStore.getState().showToast(errorMessage, 'error');
     }
   };
+
+  // Add error boundary for form initialization
+  React.useEffect(() => {
+    try {
+      console.log('[FuelTopupForm] Component mounted', { 
+        isEditing, 
+        hasInitialData: !!initialData,
+        topupsCount: topups.length,
+        isLoading 
+      });
+    } catch (error) {
+      console.error('[FuelTopupForm] Error during initialization:', error);
+    }
+  }, [isEditing, initialData, topups.length, isLoading]);
+
+  // Early return if critical dependencies are missing
+  if (!addTopup || !updateTopup) {
+    console.error('[FuelTopupForm] Missing required store methods');
+    return (
+      <div className="p-4 text-center">
+        <p className="text-destructive">Error: Unable to initialize form. Please refresh the page.</p>
+      </div>
+    );
+  }
 
   return (
     <Form {...form}>
