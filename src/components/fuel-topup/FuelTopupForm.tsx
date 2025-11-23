@@ -501,15 +501,26 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
           control={form.control}
           name="retailer"
           render={({ field }) => {
-            // Ensure value is never empty string
-            const safeValue = field.value && field.value.trim() !== '' ? field.value : undefined;
+            // Ensure value is never empty string - convert empty strings to undefined
+            let safeValue: string | undefined = undefined;
+            if (field.value) {
+              const trimmed = String(field.value).trim();
+              safeValue = trimmed !== '' ? trimmed : undefined;
+            }
+            
+            // Debug logging
+            if (field.value === '') {
+              console.warn('[FuelTopupForm] Empty string detected for retailer, converting to undefined');
+            }
+            
             return (
               <FormItem>
                 <FormLabel>Retailer (Optional)</FormLabel>
                 <Select 
                   onValueChange={(value) => {
                     // Prevent empty strings from being set
-                    field.onChange(value && value.trim() !== '' ? value : undefined);
+                    const trimmed = value ? String(value).trim() : '';
+                    field.onChange(trimmed !== '' ? trimmed : undefined);
                   }} 
                   value={safeValue}
                 >
