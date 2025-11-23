@@ -496,14 +496,16 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
           render={({ field }) => (
             <FormItem>
               <FormLabel>Retailer (Optional)</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || ''}>
+              <Select 
+                onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} 
+                value={field.value || undefined}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select retailer" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
                   {retailerList.map((retailer) => (
                     <SelectItem key={retailer} value={retailer}>
                       {retailer}
@@ -525,14 +527,16 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Fuel Grade (Optional)</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ''}>
+                <Select 
+                  onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} 
+                  value={field.value || undefined}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select fuel grade" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
                     <SelectItem value="UNLEADED">Unleaded</SelectItem>
                     <SelectItem value="SUPER_UNLEADED">Super Unleaded</SelectItem>
                   </SelectContent>
@@ -549,14 +553,16 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Fuel Grade (Optional)</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ''}>
+                <Select 
+                  onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} 
+                  value={field.value || undefined}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select fuel grade" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
                     <SelectItem value="STANDARD_DIESEL">Standard Diesel</SelectItem>
                     <SelectItem value="PREMIUM_DIESEL">Premium Diesel</SelectItem>
                   </SelectContent>
