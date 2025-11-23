@@ -596,9 +596,12 @@ export const useFuelStore = create<FuelState>()(
             await get().generateEstimatedTopups();
             
             // Always recalculate analytics data after loading topups
-            get().calculateConsumptionData();
-            get().calculateTimeSeriesData('daily');
-            get().calculatePieChartData();
+            // Use setTimeout to ensure state is updated before calculating
+            setTimeout(() => {
+              get().calculateConsumptionData();
+              get().calculateTimeSeriesData('daily');
+              get().calculatePieChartData();
+            }, 0);
           } catch (error) {
             set({
               isLoading: false,

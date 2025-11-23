@@ -275,6 +275,17 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
   // Form submission handler
   const onSubmit = async (data: FuelTopupFormData) => {
     try {
+      // Validate calculated values
+      if (isNaN(calculatedTotalCost) || calculatedTotalCost <= 0) {
+        throw new Error('Invalid total cost calculation. Please check your input values.');
+      }
+
+      // Ensure date is a valid Date object
+      const topupDate = data.date instanceof Date ? data.date : new Date(data.date);
+      if (isNaN(topupDate.getTime())) {
+        throw new Error('Invalid date. Please select a valid date.');
+      }
+
       if (isEditing && initialData) {
         // Update existing topup
         await updateTopup(initialData.id, {
@@ -283,20 +294,20 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
           costPerLitre: data.costPerLitre,
           totalCost: calculatedTotalCost,
           mileage: trackMileage && data.mileage ? data.mileage : undefined,
-          date: data.date,
+          date: topupDate,
           type: initialData.type || 'MANUAL',
           fuelType: data.fuelType,
-          retailer: data.retailer,
-          locationName: data.locationName,
-          address: data.address,
-          latitude: data.latitude,
-          longitude: data.longitude,
-          placeId: data.placeId,
-          fuelGrade: data.fuelGrade,
-          vatRate: data.vatRate,
+          retailer: data.retailer || undefined,
+          locationName: data.locationName || undefined,
+          address: data.address || undefined,
+          latitude: data.latitude || undefined,
+          longitude: data.longitude || undefined,
+          placeId: data.placeId || undefined,
+          fuelGrade: data.fuelGrade || undefined,
+          vatRate: data.vatRate || undefined,
           netPrice: calculatedNetPrice > 0 ? calculatedNetPrice : undefined,
           vatAmount: calculatedVatAmount > 0 ? calculatedVatAmount : undefined,
-          notes: data.notes || '',
+          notes: data.notes || undefined,
           isFirstTopup: initialData.isFirstTopup || false,
         });
       } else {
@@ -307,20 +318,20 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
           costPerLitre: data.costPerLitre,
           totalCost: calculatedTotalCost,
           mileage: trackMileage && data.mileage ? data.mileage : undefined,
-          date: data.date,
+          date: topupDate,
           type: 'MANUAL',
           fuelType: data.fuelType,
-          retailer: data.retailer,
-          locationName: data.locationName,
-          address: data.address,
-          latitude: data.latitude,
-          longitude: data.longitude,
-          placeId: data.placeId,
-          fuelGrade: data.fuelGrade,
-          vatRate: data.vatRate,
+          retailer: data.retailer || undefined,
+          locationName: data.locationName || undefined,
+          address: data.address || undefined,
+          latitude: data.latitude || undefined,
+          longitude: data.longitude || undefined,
+          placeId: data.placeId || undefined,
+          fuelGrade: data.fuelGrade || undefined,
+          vatRate: data.vatRate || undefined,
           netPrice: calculatedNetPrice > 0 ? calculatedNetPrice : undefined,
           vatAmount: calculatedVatAmount > 0 ? calculatedVatAmount : undefined,
-          notes: data.notes || '',
+          notes: data.notes || undefined,
           isFirstTopup: isFirstTopup,
         });
       }
@@ -337,6 +348,13 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
         : `Failed to ${isEditing ? 'update' : 'add'} fuel topup`;
       
       console.error(`Failed to ${isEditing ? 'update' : 'add'} fuel topup:`, error);
+      console.error('Error details:', {
+        error,
+        data,
+        calculatedTotalCost,
+        calculatedNetPrice,
+        calculatedVatAmount,
+      });
       useToastStore.getState().showToast(errorMessage, 'error');
     }
   };

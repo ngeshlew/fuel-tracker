@@ -114,7 +114,7 @@ interface SummaryCardsProps {
  * Custom styling: Lewis-Linear design system
  */
 export const SummaryCards: React.FC<SummaryCardsProps> = ({ currentMonth }) => {
-  const { chartData, isLoading } = useFuelStore();
+  const { chartData, isLoading, topups } = useFuelStore();
   
   // Show skeleton loading state
   if (isLoading && chartData.length === 0) {
@@ -127,6 +127,12 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ currentMonth }) => {
     );
   }
   
+  // Debug: Log chartData to help diagnose issues
+  if (process.env.NODE_ENV === 'development') {
+    console.log('SummaryCards - chartData:', chartData);
+    console.log('SummaryCards - topups:', topups);
+    console.log('SummaryCards - currentMonth:', currentMonth);
+  }
   
   // Use monthly as default time period
   const timePeriod = 'monthly' as TimePeriod;
