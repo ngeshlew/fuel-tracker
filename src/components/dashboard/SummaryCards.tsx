@@ -155,9 +155,15 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ currentMonth }) => {
       }
       case 'monthly': {
         return chartData.filter(point => {
-          const pointDate = new Date(point.date);
-          return pointDate.getMonth() === currentMonth.getMonth() && 
-                 pointDate.getFullYear() === currentMonth.getFullYear();
+          // Handle both string dates (YYYY-MM-DD) and Date objects
+          const pointDate = typeof point.date === 'string' 
+            ? new Date(point.date + 'T00:00:00') 
+            : new Date(point.date);
+          pointDate.setHours(0, 0, 0, 0);
+          const filterDate = new Date(currentMonth);
+          filterDate.setHours(0, 0, 0, 0);
+          return pointDate.getMonth() === filterDate.getMonth() && 
+                 pointDate.getFullYear() === filterDate.getFullYear();
         });
       }
       case 'yearly': {
@@ -289,7 +295,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ currentMonth }) => {
     },
     {
       title: 'Daily Average',
-      value: `${currentAverageDaily.toFixed(2)} KWH`,
+      value: `${currentAverageDaily.toFixed(2)} L`,
       change: averageTrend === 'increasing' ? 'Higher than last month' : averageTrend === 'decreasing' ? 'Lower than last month' : 'Same as last month',
       changeValue: `${averageDailyChange >= 0 ? '+' : ''}${averageDailyChange.toFixed(1)}%`,
       description: `Average daily usage`,
@@ -310,7 +316,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ currentMonth }) => {
       value: `${currentMonthVsUK >= 0 ? '+' : ''}${currentMonthVsUK.toFixed(0)}%`,
       change: currentMonthVsUK >= 0 ? 'Above UK average' : 'Below UK average',
       changeValue: `${ukComparisonChange >= 0 ? '+' : ''}${ukComparisonChange.toFixed(0)}%`,
-      description: 'Compared to UK household average (8.5 kWh/day)',
+      description: 'Compared to UK average fuel consumption (2.5 L/day)',
       icon: <Icon name="target" className="h-3 w-3" />,
       trendIcon: getTrendIcon(ukComparisonChange)
     }
