@@ -247,23 +247,82 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
     }
   }, [lastTopup, trackMileage, form]);
 
+  // Initialize Google Maps Autocomplete
+  const initializeAutocomplete = React.useCallback(() => {
+    const input = document.getElementById('location-autocomplete') as HTMLInputElement;
+    
+    if (!input) {
+      return false;
+    }
+
+    // Check if Google Maps is loaded and autocomplete not already initialized
+    if (window.google && window.google.maps && window.google.maps.places && !autocomplete) {
+      try {
+        const autocompleteInstance = new window.google.maps.places.Autocomplete(input, {
+          types: ['establishment', 'geocode'],
+          fields: ['name', 'formatted_address', 'geometry', 'place_id'],
+          componentRestrictions: { country: ['gb'] }, // UK only for fuel stations
+        });
+        
+        autocompleteInstance.addListener('place_changed', () => {
+          const place = autocompleteInstance.getPlace();
+          if (place.geometry && place.geometry.location) {
+            const locationName = place.name || undefined;
+            const address = place.formatted_address || undefined;
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            const placeId = place.place_id || undefined;
+            
+            setLocationInput(locationName || '');
+            form.setValue('locationName', locationName);
+            form.setValue('address', address);
+            form.setValue('latitude', lat);
+            form.setValue('longitude', lng);
+            form.setValue('placeId', placeId);
+          }
+        });
+        
+        setAutocomplete(autocompleteInstance);
+        console.log('[FuelTopupForm] Google Maps Autocomplete initialized');
+        return true;
+      } catch (error) {
+        console.error('[FuelTopupForm] Error initializing Google Maps Autocomplete:', error);
+        return false;
+      }
+    }
+    
+    return false;
+  }, [autocomplete, form]);
+
   // Load Google Maps API script
   useEffect(() => {
     const loadGoogleMapsScript = () => {
       // Check if already loaded
       if (window.google && window.google.maps && window.google.maps.places) {
+        // Already loaded, try to initialize autocomplete
+        setTimeout(() => initializeAutocomplete(), 200);
         return;
       }
 
       // Check if script is already being loaded
       const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
       if (existingScript) {
+        // Script is loading, wait for it
+        const checkLoaded = setInterval(() => {
+          if (window.google && window.google.maps && window.google.maps.places) {
+            clearInterval(checkLoaded);
+            setTimeout(() => initializeAutocomplete(), 200);
+          }
+        }, 100);
+        
+        // Cleanup after 10 seconds
+        setTimeout(() => clearInterval(checkLoaded), 10000);
         return;
       }
 
       const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
       if (!apiKey) {
-        console.warn('Google Maps API key not found. Set VITE_GOOGLE_MAPS_API_KEY environment variable.');
+        console.warn('[FuelTopupForm] Google Maps API key not found. Set VITE_GOOGLE_MAPS_API_KEY environment variable.');
         return;
       }
 
@@ -272,16 +331,29 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
       script.async = true;
       script.defer = true;
       script.onload = () => {
-        console.log('Google Maps API loaded');
+        console.log('[FuelTopupForm] Google Maps API loaded');
+        // Initialize autocomplete after script loads
+        setTimeout(() => initializeAutocomplete(), 200);
       };
       script.onerror = () => {
-        console.error('Failed to load Google Maps API');
+        console.error('[FuelTopupForm] Failed to load Google Maps API');
       };
       document.head.appendChild(script);
     };
 
     loadGoogleMapsScript();
-  }, []);
+    
+    // Try to initialize after a delay (in case input isn't ready yet)
+    const timer = setTimeout(() => {
+      if (!autocomplete) {
+        initializeAutocomplete();
+      }
+    }, 500);
+    
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [initializeAutocomplete, autocomplete]);
 
   // Cleanup Google Maps Autocomplete on unmount
   useEffect(() => {
@@ -712,40 +784,16 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
                       value={locationInput}
                       onChange={(e) => {
                         setLocationInput(e.target.value);
-                        field.onChange(e.target.value);
+                        // Update form field for validation, but autocomplete will override on selection
+                        field.onChange(e.target.value || undefined);
                       }}
                       onFocus={() => {
-                        // Initialize Google Maps Autocomplete if not already done
-                        if (window.google && window.google.maps && window.google.maps.places && !autocomplete) {
-                          const input = document.getElementById('location-autocomplete') as HTMLInputElement;
-                          if (input) {
-                            const autocompleteInstance = new window.google.maps.places.Autocomplete(input, {
-                              types: ['establishment', 'geocode'],
-                              fields: ['name', 'formatted_address', 'geometry', 'place_id'],
-                            });
-                            
-                            autocompleteInstance.addListener('place_changed', () => {
-                              const place = autocompleteInstance.getPlace();
-                              if (place.geometry && place.geometry.location) {
-                                const locationName = place.name || undefined;
-                                const address = place.formatted_address || undefined;
-                                const lat = place.geometry.location.lat();
-                                const lng = place.geometry.location.lng();
-                                const placeId = place.place_id || undefined;
-                                
-                                setLocationInput(locationName || '');
-                                form.setValue('locationName', locationName);
-                                form.setValue('address', address);
-                                form.setValue('latitude', lat);
-                                form.setValue('longitude', lng);
-                                form.setValue('placeId', placeId);
-                              }
-                            });
-                            
-                            setAutocomplete(autocompleteInstance);
-                          }
+                        // Ensure autocomplete is initialized when user focuses
+                        if (!autocomplete) {
+                          setTimeout(() => initializeAutocomplete(), 100);
                         }
                       }}
+                      autoComplete="off"
                     />
                     {form.watch('address') && (
                       <p className="text-xs text-muted-foreground mt-1">
