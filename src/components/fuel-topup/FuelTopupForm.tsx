@@ -189,7 +189,7 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
       })(),
       fuelType: 'PETROL',
       vatRate: 20.00, // UK standard VAT rate
-      notes: '',
+      notes: undefined,
     },
   });
 
