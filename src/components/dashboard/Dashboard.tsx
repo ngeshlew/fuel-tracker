@@ -14,10 +14,12 @@ import { FuelTopupsLog } from '../fuel-topup/FuelTopupsLog';
 import { MobileNavigation } from '../mobile/MobileNavigation';
 import { useFuelStore } from '@/store/useFuelStore';
 import { UKFuelPriceComparison } from './UKFuelPriceComparison';
+import { FuelTopup } from '../../types';
 
 export const Dashboard: FC = () => {
   const { isTopupPanelOpen, toggleTopupPanel, loadFuelTopups } = useFuelStore();
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [topupToEdit, setTopupToEdit] = useState<FuelTopup | undefined>(undefined);
 
   // Load fuel topups when component mounts
   useEffect(() => {
@@ -103,14 +105,23 @@ export const Dashboard: FC = () => {
 
                 {/* Recent Topups - Reduced spacing (2x less) */}
                 <div className="mt-8" style={{ marginTop: 'var(--space-xl)' }}>
-                  <FuelTopupsLog />
+                  <FuelTopupsLog 
+                    onEdit={(topup) => {
+                      setTopupToEdit(topup);
+                      toggleTopupPanel(true);
+                    }}
+                  />
                 </div>
               </div>
             </div>
 
             <FuelTopupPanel
               isOpen={isTopupPanelOpen}
-              onClose={() => toggleTopupPanel(false)}
+              onClose={() => {
+                toggleTopupPanel(false);
+                setTopupToEdit(undefined);
+              }}
+              topupToEdit={topupToEdit}
             />
             
           </main>

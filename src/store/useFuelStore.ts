@@ -93,11 +93,18 @@ export const useFuelStore = create<FuelState>()(
           
           // Check for duplicate topups
           const { topups } = get();
-          const isDuplicate = topups.some(topup => 
-            topup.vehicleId === topupData.vehicleId &&
-            topup.date.toDateString() === topupData.date.toDateString() &&
-            Math.abs(topup.litres - topupData.litres) < 0.01 // Allow 0.01 litre tolerance
-          );
+          // Ensure dates are Date objects for comparison
+          const topupDate = topupData.date instanceof Date 
+            ? topupData.date 
+            : new Date(topupData.date);
+          const isDuplicate = topups.some(topup => {
+            const existingDate = topup.date instanceof Date 
+              ? topup.date 
+              : new Date(topup.date);
+            return topup.vehicleId === topupData.vehicleId &&
+              existingDate.toDateString() === topupDate.toDateString() &&
+              Math.abs(topup.litres - topupData.litres) < 0.01; // Allow 0.01 litre tolerance
+          });
           
           if (isDuplicate) {
             set({ 

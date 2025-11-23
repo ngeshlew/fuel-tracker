@@ -27,6 +27,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useFuelStore } from '../../store/useFuelStore';
+import { useToastStore } from '../../store/useToastStore';
 import { FuelTopup } from '../../types';
 import { cn } from '@/lib/utils';
 import { getRetailerList } from '@/services/fuelPriceService';
@@ -325,9 +326,18 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
       }
       
       form.reset();
+      useToastStore.getState().showToast(
+        isEditing ? 'Topup updated successfully' : 'Topup added successfully',
+        'success'
+      );
       onSuccess();
     } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : `Failed to ${isEditing ? 'update' : 'add'} fuel topup`;
+      
       console.error(`Failed to ${isEditing ? 'update' : 'add'} fuel topup:`, error);
+      useToastStore.getState().showToast(errorMessage, 'error');
     }
   };
 
