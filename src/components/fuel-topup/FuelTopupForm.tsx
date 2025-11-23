@@ -706,13 +706,13 @@ export const FuelTopupForm: React.FC<FuelTopupFormProps> = ({ onSuccess, initial
                             autocompleteInstance.addListener('place_changed', () => {
                               const place = autocompleteInstance.getPlace();
                               if (place.geometry && place.geometry.location) {
-                                const locationName = place.name || '';
-                                const address = place.formatted_address || '';
+                                const locationName = place.name || undefined;
+                                const address = place.formatted_address || undefined;
                                 const lat = place.geometry.location.lat();
                                 const lng = place.geometry.location.lng();
-                                const placeId = place.place_id || '';
+                                const placeId = place.place_id || undefined;
                                 
-                                setLocationInput(locationName);
+                                setLocationInput(locationName || '');
                                 form.setValue('locationName', locationName);
                                 form.setValue('address', address);
                                 form.setValue('latitude', lat);
