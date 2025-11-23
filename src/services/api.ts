@@ -1,5 +1,29 @@
 // API service for communicating with the backend
-const API_BASE_URL = import.meta.env.VITE_SERVER_URL || 'https://fuel-tracker.up.railway.app';
+// Smart API URL resolution:
+// 1. Use VITE_SERVER_URL if explicitly set (allows override for testing/staging)
+// 2. In development mode, automatically use localhost:3001
+// 3. Otherwise, fall back to production Railway URL
+const getApiBaseUrl = (): string => {
+  // Explicit environment variable takes precedence
+  if (import.meta.env.VITE_SERVER_URL) {
+    return import.meta.env.VITE_SERVER_URL;
+  }
+  
+  // Auto-detect local development
+  if (import.meta.env.DEV) {
+    return 'http://localhost:3001';
+  }
+  
+  // Production fallback
+  return 'https://fuel-tracker.up.railway.app';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+// Log API URL in development for debugging
+if (import.meta.env.DEV) {
+  console.log('🔧 API Base URL:', API_BASE_URL);
+}
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -79,19 +103,65 @@ class ApiService {
 
     try {
       const response = await fetch(url, { ...defaultOptions, ...options });
-      const data = await response.json();
-
+      
+      // Handle network errors and CORS issues
       if (!response.ok) {
-        throw new Error(data.error?.message || `HTTP error! status: ${response.status}`);
+        let errorMessage: string;
+        
+        // Try to parse error response
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+        } catch {
+          // If JSON parsing fails, use status text
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        
+        // Provide helpful error messages for common issues
+        if (response.status === 404) {
+          errorMessage = `API endpoint not found. Please check if the server is running at ${this.baseURL}`;
+        } else if (response.status === 0 || response.type === 'opaque') {
+          errorMessage = `Unable to connect to API server. This may be a CORS issue or the server is not running. Check ${this.baseURL}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      // Parse successful response
+      let data: ApiResponse<T>;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        throw new Error(`Invalid JSON response from server: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}`);
       }
 
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      // Enhanced error logging for debugging
+      const errorDetails = {
+        url,
+        endpoint,
+        method: options.method || 'GET',
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString(),
+      };
+      
+      console.error('API request failed:', errorDetails);
+      
+      // Provide user-friendly error messages
+      let userMessage: string;
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        userMessage = `Network error: Unable to connect to API server at ${this.baseURL}. Please ensure the server is running.`;
+      } else if (error instanceof Error) {
+        userMessage = error.message;
+      } else {
+        userMessage = 'An unexpected error occurred while communicating with the server.';
+      }
+      
       return {
         success: false,
         error: {
-          message: error instanceof Error ? error.message : 'Unknown error occurred',
+          message: userMessage,
         },
       };
     }

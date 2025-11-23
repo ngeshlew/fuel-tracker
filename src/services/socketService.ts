@@ -1,7 +1,28 @@
 import { io, Socket } from 'socket.io-client';
 import type { FuelTopup } from './api';
 
-const SOCKET_URL = import.meta.env.VITE_SERVER_URL || 'https://fuel-tracker.up.railway.app';
+// Use the same smart URL detection as API service
+const getSocketUrl = (): string => {
+  // Explicit environment variable takes precedence
+  if (import.meta.env.VITE_SERVER_URL) {
+    return import.meta.env.VITE_SERVER_URL;
+  }
+  
+  // Auto-detect local development
+  if (import.meta.env.DEV) {
+    return 'http://localhost:3001';
+  }
+  
+  // Production fallback
+  return 'https://fuel-tracker.up.railway.app';
+};
+
+const SOCKET_URL = getSocketUrl();
+
+// Log Socket URL in development for debugging
+if (import.meta.env.DEV) {
+  console.log('🔧 Socket URL:', SOCKET_URL);
+}
 
 class SocketService {
   private socket: Socket | null = null;
