@@ -295,6 +295,91 @@ router.delete('/:id', async (req, res, next) => {
   }
 });
 
+// POST /api/fuel-topups/bulk - Bulk create fuel topups
+router.post('/bulk', async (req, res, next) => {
+  try {
+    const { entries } = req.body;
+    
+    if (!Array.isArray(entries) || entries.length === 0) {
+      return next(createError('entries array is required', 400));
+    }
+
+    const schema = z.object({
+      vehicleId: z.string().min(1),
+      litres: z.number().positive(),
+      costPerLitre: z.number().nonnegative(),
+      totalCost: z.number().nonnegative().optional(),
+      mileage: z.number().nonnegative().optional().nullable(),
+      date: z.string().refine((s) => !Number.isNaN(Date.parse(s)), 'Invalid date'),
+      type: z.enum(['MANUAL', 'IMPORTED', 'ESTIMATED']).optional(),
+      fuelType: z.enum(['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID']).optional().nullable(),
+      retailer: z.string().optional().nullable(),
+      fuelGrade: z.enum(['UNLEADED', 'SUPER_UNLEADED', 'PREMIUM_DIESEL', 'STANDARD_DIESEL']).optional().nullable(),
+      vatRate: z.number().min(0).max(100).optional().nullable(),
+      netPrice: z.number().nonnegative().optional().nullable(),
+      vatAmount: z.number().nonnegative().optional().nullable(),
+      locationName: z.string().optional().nullable(),
+      address: z.string().optional().nullable(),
+      latitude: z.number().optional().nullable(),
+      longitude: z.number().optional().nullable(),
+      placeId: z.string().optional().nullable(),
+      notes: z.string().optional().nullable(),
+      isFirstTopup: z.boolean().optional()
+    });
+
+    // Validate all entries
+    const validatedEntries = entries.map((entry: any, index: number) => {
+      try {
+        return schema.parse(entry);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          throw new Error(`Entry ${index}: ${error.issues.map((e) => e.message).join(', ')}`);
+        }
+        throw error;
+      }
+    });
+
+    // Create all entries
+    const createdEntries = await prisma.fuelTopup.createMany({
+      data: validatedEntries.map((entry) => ({
+        vehicleId: String(entry.vehicleId),
+        litres: Number(entry.litres),
+        costPerLitre: Number(entry.costPerLitre),
+        totalCost: entry.totalCost !== undefined ? Number(entry.totalCost) : Number(entry.litres) * Number(entry.costPerLitre),
+        mileage: entry.mileage ? Number(entry.mileage) : null,
+        date: new Date(entry.date),
+        type: entry.type ?? 'MANUAL',
+        fuelType: entry.fuelType ?? null,
+        retailer: entry.retailer ?? null,
+        fuelGrade: entry.fuelGrade ?? null,
+        vatRate: entry.vatRate ? Number(entry.vatRate) : null,
+        netPrice: entry.netPrice ? Number(entry.netPrice) : null,
+        vatAmount: entry.vatAmount ? Number(entry.vatAmount) : null,
+        locationName: entry.locationName ?? null,
+        address: entry.address ?? null,
+        latitude: entry.latitude ? Number(entry.latitude) : null,
+        longitude: entry.longitude ? Number(entry.longitude) : null,
+        placeId: entry.placeId ?? null,
+        notes: entry.notes ?? null,
+        isFirstTopup: entry.isFirstTopup ?? false,
+      })),
+      skipDuplicates: true,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: `Created ${createdEntries.count} fuel topup entries`,
+      count: createdEntries.count,
+    });
+  } catch (error) {
+    console.error('Bulk create fuel topups failed:', error);
+    if (error instanceof Error) {
+      return next(createError(error.message, 400));
+    }
+    next(createError('Failed to bulk create fuel topups', 500));
+  }
+});
+
 // GET /api/fuel-topups/analytics/consumption - Get consumption analytics
 router.get('/analytics/consumption', async (req, res, next) => {
   try {
