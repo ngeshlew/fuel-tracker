@@ -20,6 +20,9 @@ const getApiBaseUrl = (): string => {
 
 const API_BASE_URL = getApiBaseUrl();
 
+// Export getApiBaseUrl for use in other services
+export { getApiBaseUrl };
+
 // Log API URL in development for debugging
 if (import.meta.env.DEV) {
   console.log('🔧 API Base URL:', API_BASE_URL);
@@ -79,6 +82,20 @@ export interface TrendData {
   averageDaily: number; // Average litres per day
   dataCount: number;
   averageEfficiency?: number; // Average miles per litre
+}
+
+export interface MileageEntry {
+  id: string;
+  vehicleId: string;
+  date: string;
+  odometerReading: number;
+  tripDistance?: number | null;
+  tripPurpose?: string | null;
+  notes?: string | null;
+  linkedFuelTopupId?: string | null;
+  type: 'MANUAL' | 'FUEL_LINKED';
+  createdAt: string;
+  updatedAt: string;
 }
 
 class ApiService {
@@ -262,6 +279,42 @@ class ApiService {
     uptime: number;
   }>> {
     return this.request('/health');
+  }
+
+  // Mileage endpoints
+  async getMileageEntries(): Promise<ApiResponse<MileageEntry[]>> {
+    return this.request<MileageEntry[]>('/api/mileage');
+  }
+
+  async getMileageEntry(id: string): Promise<ApiResponse<MileageEntry>> {
+    return this.request<MileageEntry>(`/api/mileage/${id}`);
+  }
+
+  async createMileageEntry(entry: Omit<MileageEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<MileageEntry>> {
+    return this.request<MileageEntry>('/api/mileage', {
+      method: 'POST',
+      body: JSON.stringify(entry),
+    });
+  }
+
+  async updateMileageEntry(id: string, entry: Partial<MileageEntry>): Promise<ApiResponse<MileageEntry>> {
+    return this.request<MileageEntry>(`/api/mileage/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(entry),
+    });
+  }
+
+  async deleteMileageEntry(id: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>(`/api/mileage/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async bulkCreateMileageEntries(entries: Omit<MileageEntry, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<ApiResponse<{ count: number; message: string }>> {
+    return this.request<{ count: number; message: string }>('/api/mileage/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ entries }),
+    });
   }
 
 }

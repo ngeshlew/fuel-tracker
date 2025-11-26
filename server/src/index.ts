@@ -15,6 +15,7 @@ import analyticsRoutes from './routes/analytics';
 import path from 'path';
 import aiRoutes from './routes/ai';
 import fuelPriceRoutes from './routes/fuelPrices';
+import mileageRoutes from './routes/mileage';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -49,7 +50,7 @@ app.get('/', (_req, res) => {
   res.status(200).json({
     success: true,
     service: 'fuel-tracker-backend',
-    endpoints: ['/health', '/api/ai/health', '/api/fuel-topups', '/api/analytics', '/api/fuel-prices'],
+    endpoints: ['/health', '/api/ai/health', '/api/fuel-topups', '/api/analytics', '/api/fuel-prices', '/api/mileage'],
     timestamp: new Date().toISOString()
   });
 });
@@ -90,6 +91,7 @@ app.use('/api/fuel-topups', fuelTopupRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/fuel-prices', fuelPriceRoutes);
+app.use('/api/mileage', mileageRoutes);
 
 // Error handling middleware
 app.use(notFound);

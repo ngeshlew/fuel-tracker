@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { useToastStore } from './useToastStore';
+import { apiService } from '../services/api';
 import type { 
   MileageEntry, 
   MileageChartDataPoint,
@@ -30,6 +31,7 @@ interface MileageState {
   // Data loading
   loadEntries: () => Promise<void>;
   syncFromFuelTopups: (topups: FuelTopup[]) => void;
+  migrateLocalEntriesToServer: () => Promise<void>;
   
   // Analytics calculations
   calculateChartData: () => void;
@@ -107,27 +109,44 @@ export const useMileageStore = create<MileageState>()(
           set({ isLoading: true, error: null });
           
           try {
-            const newEntry: MileageEntry = {
-              ...entryData,
-              id: `mileage-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            };
+            // Call API to create entry
+            const response = await apiService.createMileageEntry({
+              vehicleId: entryData.vehicleId,
+              date: entryData.date instanceof Date ? entryData.date.toISOString() : entryData.date,
+              odometerReading: entryData.odometerReading,
+              tripDistance: entryData.tripDistance ?? null,
+              tripPurpose: entryData.tripPurpose ?? null,
+              notes: entryData.notes ?? null,
+              linkedFuelTopupId: entryData.linkedFuelTopupId ?? null,
+              type: entryData.type,
+            });
             
-            set((state) => ({
-              entries: [...state.entries, newEntry].sort(
-                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-              ),
-              isLoading: false,
-            }));
-            
-            // Recalculate analytics
-            get().recalculateAnalytics();
-            
-            useToastStore.getState().showToast(
-              `Recorded ${newEntry.odometerReading.toLocaleString()} miles`,
-              'success'
-            );
+            if (response.success && response.data) {
+              const newEntry: MileageEntry = {
+                ...response.data,
+                date: new Date(response.data.date),
+                createdAt: new Date(response.data.createdAt),
+                updatedAt: new Date(response.data.updatedAt),
+                odometerReading: Number(response.data.odometerReading),
+                tripDistance: response.data.tripDistance ? Number(response.data.tripDistance) : undefined,
+              };
+              
+              set((state) => ({
+                entries: [...state.entries, newEntry].sort(
+                  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+                ),
+                isLoading: false,
+              }));
+              
+              get().recalculateAnalytics();
+              
+              useToastStore.getState().showToast(
+                `Recorded ${newEntry.odometerReading.toLocaleString()} miles`,
+                'success'
+              );
+            } else {
+              throw new Error(response.error?.message || 'Failed to create mileage entry');
+            }
           } catch (error) {
             set({ 
               error: error instanceof Error ? error.message : 'Failed to add mileage entry',
@@ -144,26 +163,54 @@ export const useMileageStore = create<MileageState>()(
           set({ isLoading: true, error: null });
           
           try {
-            set((state) => ({
-              entries: state.entries.map((entry) =>
-                entry.id === id
-                  ? { ...entry, ...entryData, updatedAt: new Date() }
-                  : entry
-              ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-              isLoading: false,
-            }));
+            // Prepare data for API
+            const updateData: Record<string, unknown> = {};
+            if (entryData.vehicleId !== undefined) updateData.vehicleId = entryData.vehicleId;
+            if (entryData.date !== undefined) updateData.date = entryData.date instanceof Date ? entryData.date.toISOString() : entryData.date;
+            if (entryData.odometerReading !== undefined) updateData.odometerReading = entryData.odometerReading;
+            if (entryData.tripDistance !== undefined) updateData.tripDistance = entryData.tripDistance;
+            if (entryData.tripPurpose !== undefined) updateData.tripPurpose = entryData.tripPurpose;
+            if (entryData.notes !== undefined) updateData.notes = entryData.notes;
+            if (entryData.type !== undefined) updateData.type = entryData.type;
             
-            get().recalculateAnalytics();
+            const response = await apiService.updateMileageEntry(id, updateData as Partial<import('../services/api').MileageEntry>);
             
-            useToastStore.getState().showToast(
-              'Mileage entry has been updated',
-              'success'
-            );
+            if (response.success && response.data) {
+              set((state) => ({
+                entries: state.entries.map((entry) =>
+                  entry.id === id
+                    ? { 
+                        ...entry, 
+                        ...response.data,
+                        date: new Date(response.data!.date),
+                        createdAt: new Date(response.data!.createdAt),
+                        updatedAt: new Date(response.data!.updatedAt),
+                        odometerReading: Number(response.data!.odometerReading),
+                        tripDistance: response.data!.tripDistance ? Number(response.data!.tripDistance) : undefined,
+                      }
+                    : entry
+                ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+                isLoading: false,
+              }));
+              
+              get().recalculateAnalytics();
+              
+              useToastStore.getState().showToast(
+                'Mileage entry has been updated',
+                'success'
+              );
+            } else {
+              throw new Error(response.error?.message || 'Failed to update mileage entry');
+            }
           } catch (error) {
             set({ 
               error: error instanceof Error ? error.message : 'Failed to update mileage entry',
               isLoading: false 
             });
+            useToastStore.getState().showToast(
+              'Failed to update mileage entry',
+              'error'
+            );
           }
         },
 
@@ -171,22 +218,32 @@ export const useMileageStore = create<MileageState>()(
           set({ isLoading: true, error: null });
           
           try {
-            set((state) => ({
-              entries: state.entries.filter((entry) => entry.id !== id),
-              isLoading: false,
-            }));
+            const response = await apiService.deleteMileageEntry(id);
             
-            get().recalculateAnalytics();
-            
-            useToastStore.getState().showToast(
-              'Mileage entry has been removed',
-              'success'
-            );
+            if (response.success) {
+              set((state) => ({
+                entries: state.entries.filter((entry) => entry.id !== id),
+                isLoading: false,
+              }));
+              
+              get().recalculateAnalytics();
+              
+              useToastStore.getState().showToast(
+                'Mileage entry has been removed',
+                'success'
+              );
+            } else {
+              throw new Error(response.error?.message || 'Failed to delete mileage entry');
+            }
           } catch (error) {
             set({ 
               error: error instanceof Error ? error.message : 'Failed to delete mileage entry',
               isLoading: false 
             });
+            useToastStore.getState().showToast(
+              'Failed to delete mileage entry',
+              'error'
+            );
           }
         },
 
@@ -198,15 +255,36 @@ export const useMileageStore = create<MileageState>()(
           set({ isLoading: true, error: null });
           
           try {
-            // For now, entries are persisted locally
-            // In the future, this could fetch from an API
+            const response = await apiService.getMileageEntries();
+            
+            if (response.success && response.data) {
+              // Convert API data to MileageEntry format
+              const entries: MileageEntry[] = response.data.map((entry) => ({
+                ...entry,
+                date: new Date(entry.date),
+                createdAt: new Date(entry.createdAt),
+                updatedAt: new Date(entry.updatedAt),
+                odometerReading: Number(entry.odometerReading),
+                tripDistance: entry.tripDistance ? Number(entry.tripDistance) : undefined,
+              }));
+              
+              set({ 
+                entries: entries.sort(
+                  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+                ),
+                isLoading: false 
+              });
+              get().recalculateAnalytics();
+            } else {
+              // If API fails, use locally cached entries
+              console.warn('API fetch failed, using cached entries:', response.error);
+              set({ isLoading: false });
+              get().recalculateAnalytics();
+            }
+          } catch (error) {
+            console.warn('Failed to fetch from API, using cached entries:', error);
             set({ isLoading: false });
             get().recalculateAnalytics();
-          } catch (error) {
-            set({ 
-              error: error instanceof Error ? error.message : 'Failed to load mileage entries',
-              isLoading: false 
-            });
           }
         },
 
@@ -246,6 +324,76 @@ export const useMileageStore = create<MileageState>()(
             }));
             
             get().recalculateAnalytics();
+          }
+        },
+
+        migrateLocalEntriesToServer: async () => {
+          const { entries } = get();
+          
+          if (entries.length === 0) {
+            console.log('No local entries to migrate');
+            return;
+          }
+          
+          set({ isLoading: true, error: null });
+          
+          try {
+            // First check what's already on server
+            const serverResponse = await apiService.getMileageEntries();
+            const serverEntries = serverResponse.success && serverResponse.data ? serverResponse.data : [];
+            const serverOdometerReadings = new Set(serverEntries.map(e => `${e.date}-${e.odometerReading}`));
+            
+            // Find entries that aren't on the server yet
+            const entriesToMigrate = entries.filter(entry => {
+              const key = `${entry.date instanceof Date ? entry.date.toISOString() : entry.date}-${entry.odometerReading}`;
+              return !serverOdometerReadings.has(key);
+            });
+            
+            if (entriesToMigrate.length === 0) {
+              console.log('All entries already on server');
+              set({ isLoading: false });
+              return;
+            }
+            
+            console.log(`Migrating ${entriesToMigrate.length} entries to server...`);
+            
+            // Bulk create entries on server
+            const response = await apiService.bulkCreateMileageEntries(
+              entriesToMigrate.map(entry => ({
+                vehicleId: entry.vehicleId,
+                date: entry.date instanceof Date ? entry.date.toISOString() : entry.date,
+                odometerReading: entry.odometerReading,
+                tripDistance: entry.tripDistance ?? null,
+                tripPurpose: entry.tripPurpose ?? null,
+                notes: entry.notes ?? null,
+                linkedFuelTopupId: entry.linkedFuelTopupId ?? null,
+                type: entry.type,
+              }))
+            );
+            
+            if (response.success) {
+              useToastStore.getState().showToast(
+                `Migrated ${response.data?.count || entriesToMigrate.length} mileage entries to server`,
+                'success'
+              );
+              
+              // Reload entries from server to get proper IDs
+              await get().loadEntries();
+            } else {
+              throw new Error(response.error?.message || 'Failed to migrate entries');
+            }
+            
+            set({ isLoading: false });
+          } catch (error) {
+            console.error('Migration failed:', error);
+            set({ 
+              error: error instanceof Error ? error.message : 'Failed to migrate entries',
+              isLoading: false 
+            });
+            useToastStore.getState().showToast(
+              'Failed to migrate entries to server',
+              'error'
+            );
           }
         },
 

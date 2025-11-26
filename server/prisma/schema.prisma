@@ -112,3 +112,24 @@ enum TrendType {
   DECREASING
   STABLE
 }
+
+enum MileageEntryType {
+  MANUAL
+  FUEL_LINKED
+}
+
+model MileageEntry {
+  id                String           @id @default(cuid())
+  vehicleId         String           @map("vehicle_id")
+  date              DateTime
+  odometerReading   Decimal          @map("odometer_reading")
+  tripDistance      Decimal?         @map("trip_distance")
+  tripPurpose       String?          @map("trip_purpose")
+  notes             String?
+  linkedFuelTopupId String?          @map("linked_fuel_topup_id")
+  type              MileageEntryType @default(MANUAL)
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  @@map("mileage_entries")
+}
