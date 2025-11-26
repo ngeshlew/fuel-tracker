@@ -84,6 +84,23 @@ export interface TrendData {
   averageEfficiency?: number; // Average miles per litre
 }
 
+export interface EfficiencyMetrics {
+  averageMpg: number | null;
+  averageCostPerMile: number | null;
+  totalMilesDriven: number | null;
+  totalLitresUsed: number | null;
+  totalSpent: number | null;
+  entries: Array<{
+    date: string;
+    topupId: string;
+    milesDriven: number;
+    litresUsed: number;
+    mpg: number;
+    costPerMile: number;
+    totalCost: number;
+  }>;
+}
+
 export interface MileageEntry {
   id: string;
   vehicleId: string;

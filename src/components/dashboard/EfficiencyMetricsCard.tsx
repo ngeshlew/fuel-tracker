@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
-import { apiService } from '@/services/api';
-import { EfficiencyMetrics } from '@/types';
+import { apiService, EfficiencyMetrics } from '@/services/api';
 
 export const EfficiencyMetricsCard: React.FC = () => {
   const [metrics, setMetrics] = useState<EfficiencyMetrics | null>(null);
