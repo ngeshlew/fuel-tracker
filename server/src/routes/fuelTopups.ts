@@ -404,7 +404,7 @@ router.post('/bulk', async (req, res, next) => {
 });
 
 // GET /api/fuel-topups/analytics/efficiency - Get fuel efficiency metrics
-router.get('/analytics/efficiency', async (req, res, next) => {
+router.get('/analytics/efficiency', async (_req, res, next) => {
   try {
     // Get all topups with mileage, sorted by date
     const topups = await prisma.fuelTopup.findMany({
@@ -415,7 +415,7 @@ router.get('/analytics/efficiency', async (req, res, next) => {
     });
 
     if (topups.length < 2) {
-      return res.json({
+      res.json({
         success: true,
         data: {
           averageMpg: null,
@@ -426,6 +426,7 @@ router.get('/analytics/efficiency', async (req, res, next) => {
           entries: []
         }
       });
+      return;
     }
 
     const efficiencyData: Array<{
