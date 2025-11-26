@@ -122,13 +122,25 @@ export const useMileageStore = create<MileageState>()(
             });
             
             if (response.success && response.data) {
+              // Helper to convert API tripPurpose to valid enum value
+              const convertTripPurpose = (purpose: string | null | undefined): MileageEntry['tripPurpose'] => {
+                if (!purpose) return undefined;
+                const validPurposes = ['COMMUTE', 'BUSINESS', 'LEISURE', 'HOLIDAY', 'OTHER'] as const;
+                return validPurposes.includes(purpose as any) ? (purpose as MileageEntry['tripPurpose']) : undefined;
+              };
+              
               const newEntry: MileageEntry = {
-                ...response.data,
+                id: response.data.id,
+                vehicleId: response.data.vehicleId,
                 date: new Date(response.data.date),
-                createdAt: new Date(response.data.createdAt),
-                updatedAt: new Date(response.data.updatedAt),
                 odometerReading: Number(response.data.odometerReading),
                 tripDistance: response.data.tripDistance ? Number(response.data.tripDistance) : undefined,
+                tripPurpose: convertTripPurpose(response.data.tripPurpose),
+                notes: response.data.notes ?? undefined,
+                linkedFuelTopupId: response.data.linkedFuelTopupId ?? undefined,
+                type: response.data.type,
+                createdAt: new Date(response.data.createdAt),
+                updatedAt: new Date(response.data.updatedAt),
               };
               
               set((state) => ({
@@ -176,17 +188,29 @@ export const useMileageStore = create<MileageState>()(
             const response = await apiService.updateMileageEntry(id, updateData as Partial<import('../services/api').MileageEntry>);
             
             if (response.success && response.data) {
+              // Helper to convert API tripPurpose to valid enum value
+              const convertTripPurpose = (purpose: string | null | undefined): MileageEntry['tripPurpose'] => {
+                if (!purpose) return undefined;
+                const validPurposes = ['COMMUTE', 'BUSINESS', 'LEISURE', 'HOLIDAY', 'OTHER'] as const;
+                return validPurposes.includes(purpose as any) ? (purpose as MileageEntry['tripPurpose']) : undefined;
+              };
+              
+              const updatedData = response.data;
               set((state) => ({
                 entries: state.entries.map((entry) =>
                   entry.id === id
                     ? { 
-                        ...entry, 
-                        ...response.data,
-                        date: new Date(response.data!.date),
-                        createdAt: new Date(response.data!.createdAt),
-                        updatedAt: new Date(response.data!.updatedAt),
-                        odometerReading: Number(response.data!.odometerReading),
-                        tripDistance: response.data!.tripDistance ? Number(response.data!.tripDistance) : undefined,
+                        id: updatedData.id,
+                        vehicleId: updatedData.vehicleId,
+                        date: new Date(updatedData.date),
+                        odometerReading: Number(updatedData.odometerReading),
+                        tripDistance: updatedData.tripDistance ? Number(updatedData.tripDistance) : undefined,
+                        tripPurpose: convertTripPurpose(updatedData.tripPurpose),
+                        notes: updatedData.notes ?? undefined,
+                        linkedFuelTopupId: updatedData.linkedFuelTopupId ?? undefined,
+                        type: updatedData.type,
+                        createdAt: new Date(updatedData.createdAt),
+                        updatedAt: new Date(updatedData.updatedAt),
                       }
                     : entry
                 ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
@@ -254,18 +278,30 @@ export const useMileageStore = create<MileageState>()(
         loadEntries: async () => {
           set({ isLoading: true, error: null });
           
+          // Helper to convert API tripPurpose to valid enum value
+          const convertTripPurpose = (purpose: string | null | undefined): MileageEntry['tripPurpose'] => {
+            if (!purpose) return undefined;
+            const validPurposes = ['COMMUTE', 'BUSINESS', 'LEISURE', 'HOLIDAY', 'OTHER'] as const;
+            return validPurposes.includes(purpose as any) ? (purpose as MileageEntry['tripPurpose']) : undefined;
+          };
+          
           try {
             const response = await apiService.getMileageEntries();
             
             if (response.success && response.data) {
               // Convert API data to MileageEntry format
               const entries: MileageEntry[] = response.data.map((entry) => ({
-                ...entry,
+                id: entry.id,
+                vehicleId: entry.vehicleId,
                 date: new Date(entry.date),
-                createdAt: new Date(entry.createdAt),
-                updatedAt: new Date(entry.updatedAt),
                 odometerReading: Number(entry.odometerReading),
                 tripDistance: entry.tripDistance ? Number(entry.tripDistance) : undefined,
+                tripPurpose: convertTripPurpose(entry.tripPurpose),
+                notes: entry.notes ?? undefined,
+                linkedFuelTopupId: entry.linkedFuelTopupId ?? undefined,
+                type: entry.type,
+                createdAt: new Date(entry.createdAt),
+                updatedAt: new Date(entry.updatedAt),
               }));
               
               set({ 
