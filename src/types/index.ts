@@ -104,6 +104,23 @@ export interface ConsumptionData {
   efficiency?: number; // Optional miles per litre if mileage tracked
 }
 
+export interface EfficiencyMetrics {
+  averageMpg: number | null;
+  averageCostPerMile: number | null;
+  totalMilesDriven: number | null;
+  totalLitresUsed: number | null;
+  totalSpent: number | null;
+  entries: Array<{
+    date: string;
+    topupId: string;
+    milesDriven: number;
+    litresUsed: number;
+    mpg: number;
+    costPerMile: number;
+    totalCost: number;
+  }>;
+}
+
 export interface UserPreferences {
   id: string;
   userId: string;

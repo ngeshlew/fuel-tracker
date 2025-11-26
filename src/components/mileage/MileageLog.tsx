@@ -162,12 +162,19 @@ export const MileageLog: React.FC<MileageLogProps> = ({ onEdit }) => {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge 
-                            variant="outline" 
-                            className={entry.type === 'FUEL_LINKED' ? 'border-primary/50' : ''}
-                          >
-                            {entry.type === 'FUEL_LINKED' ? 'Fuel Linked' : 'Manual'}
-                          </Badge>
+                          {entry.type === 'FUEL_LINKED' ? (
+                            <Badge 
+                              variant="outline" 
+                              className="border-primary/50 bg-primary/5"
+                            >
+                              <Icon name="fuel" className="h-3 w-3 mr-1" />
+                              Fuel Linked
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">
+                              Manual
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">

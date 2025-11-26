@@ -229,6 +229,10 @@ class ApiService {
     return this.request<ConsumptionData[]>(endpoint);
   }
 
+  async getEfficiencyMetrics(): Promise<ApiResponse<EfficiencyMetrics>> {
+    return this.request<EfficiencyMetrics>('/api/fuel-topups/analytics/efficiency');
+  }
+
   // Analytics endpoints
   async getAnalyticsSummary(params?: {
     startDate?: string;

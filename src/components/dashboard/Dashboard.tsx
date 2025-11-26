@@ -14,6 +14,7 @@ import { FuelTopupsLog } from '../fuel-topup/FuelTopupsLog';
 import { MobileNavigation } from '../mobile/MobileNavigation';
 import { useFuelStore } from '@/store/useFuelStore';
 import { UKFuelPriceComparison } from './UKFuelPriceComparison';
+import { EfficiencyMetricsCard } from './EfficiencyMetricsCard';
 import { FuelTopup } from '../../types';
 
 export const Dashboard: FC = () => {
@@ -96,8 +97,11 @@ export const Dashboard: FC = () => {
                     <AnnualProgressCards />
                   </div>
                   
-                  {/* Consumption Chart */}
-                  <ConsumptionChart />
+                  {/* Consumption Chart and Efficiency Metrics */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <ConsumptionChart />
+                    <EfficiencyMetricsCard />
+                  </div>
                   
                   {/* Seasonal Tracker */}
                   <SeasonalTracker />

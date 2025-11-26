@@ -412,7 +412,14 @@ export const FuelTopupsLog: React.FC<FuelTopupsLogProps> = ({
                                     {topup.vatAmount ? `£${topup.vatAmount.toFixed(2)}${topup.vatRate ? ` (${topup.vatRate}%)` : ''}` : '-'}
                                   </TableCell>
                                   <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>£{topup.totalCost.toFixed(2)}</TableCell>
-                                  <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>{topup.mileage ? `${topup.mileage.toLocaleString()}` : '-'}</TableCell>
+                                  <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>
+                                    {topup.mileage ? (
+                                      <span className="flex items-center gap-1">
+                                        <Icon name="gauge" className="h-3 w-3 text-primary" />
+                                        {topup.mileage.toLocaleString()}
+                                      </span>
+                                    ) : '-'}
+                                  </TableCell>
                                   <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>{topup.fuelType || '-'}</TableCell>
                                   <TableCell style={{ paddingTop: 'var(--space-md)', paddingBottom: 'var(--space-md)' }}>
                                     <span className="text-xs uppercase tracking-normal font-mono">

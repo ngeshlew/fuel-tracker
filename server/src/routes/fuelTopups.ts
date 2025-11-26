@@ -126,6 +126,21 @@ router.post('/', async (req, res, next) => {
       }
     });
 
+    // If mileage was provided, also create a linked mileage entry
+    let linkedMileageEntry = null;
+    if (parsed.mileage) {
+      linkedMileageEntry = await prisma.mileageEntry.create({
+        data: {
+          vehicleId: String(parsed.vehicleId),
+          date: new Date(parsed.date),
+          odometerReading: Number(parsed.mileage),
+          linkedFuelTopupId: newTopup.id,
+          type: 'FUEL_LINKED',
+          notes: parsed.retailer ? `Fuel topup at ${parsed.retailer}` : 'Fuel topup',
+        }
+      });
+    }
+
     // Convert Decimal fields to numbers for JSON response
     const formattedTopup = {
       ...newTopup,
@@ -136,12 +151,20 @@ router.post('/', async (req, res, next) => {
       vatRate: newTopup.vatRate ? Number(newTopup.vatRate) : undefined,
       netPrice: newTopup.netPrice ? Number(newTopup.netPrice) : undefined,
       vatAmount: newTopup.vatAmount ? Number(newTopup.vatAmount) : undefined,
+      linkedMileageEntryId: linkedMileageEntry?.id,
     };
 
     // Emit real-time update
     const io = req.app.get('io');
     if (io) {
       io.to('fuel-topups').emit('fuel-topup-added', formattedTopup);
+      // Also emit mileage update if a linked entry was created
+      if (linkedMileageEntry) {
+        io.to('mileage').emit('mileage-entry-added', {
+          ...linkedMileageEntry,
+          odometerReading: Number(linkedMileageEntry.odometerReading),
+        });
+      }
     }
 
     res.status(201).json({
@@ -377,6 +400,100 @@ router.post('/bulk', async (req, res, next) => {
       return next(createError(error.message, 400));
     }
     next(createError('Failed to bulk create fuel topups', 500));
+  }
+});
+
+// GET /api/fuel-topups/analytics/efficiency - Get fuel efficiency metrics
+router.get('/analytics/efficiency', async (req, res, next) => {
+  try {
+    // Get all topups with mileage, sorted by date
+    const topups = await prisma.fuelTopup.findMany({
+      where: {
+        mileage: { not: null }
+      },
+      orderBy: { date: 'asc' }
+    });
+
+    if (topups.length < 2) {
+      return res.json({
+        success: true,
+        data: {
+          averageMpg: null,
+          averageCostPerMile: null,
+          totalMilesDriven: null,
+          totalLitresUsed: null,
+          totalSpent: null,
+          entries: []
+        }
+      });
+    }
+
+    const efficiencyData: Array<{
+      date: string;
+      topupId: string;
+      milesDriven: number;
+      litresUsed: number;
+      mpg: number;
+      costPerMile: number;
+      totalCost: number;
+    }> = [];
+
+    let totalMilesDriven = 0;
+    let totalLitresUsed = 0;
+    let totalSpent = 0;
+
+    for (let i = 1; i < topups.length; i++) {
+      const current = topups[i]!;
+      const previous = topups[i - 1]!;
+
+      const currentMileage = Number(current.mileage);
+      const prevMileage = Number(previous.mileage);
+      const litres = Number(current.litres);
+      const cost = Number(current.totalCost);
+
+      const milesDriven = currentMileage - prevMileage;
+
+      if (milesDriven > 0 && litres > 0) {
+        // Convert litres to gallons (UK gallon = 4.54609 litres)
+        const gallons = litres / 4.54609;
+        const mpg = milesDriven / gallons;
+        const costPerMile = cost / milesDriven;
+
+        totalMilesDriven += milesDriven;
+        totalLitresUsed += litres;
+        totalSpent += cost;
+
+        efficiencyData.push({
+          date: current.date.toISOString().split('T')[0]!,
+          topupId: current.id,
+          milesDriven,
+          litresUsed: litres,
+          mpg: Math.round(mpg * 10) / 10,
+          costPerMile: Math.round(costPerMile * 100) / 100,
+          totalCost: cost,
+        });
+      }
+    }
+
+    // Calculate averages
+    const avgGallons = totalLitresUsed / 4.54609;
+    const averageMpg = totalMilesDriven > 0 ? Math.round((totalMilesDriven / avgGallons) * 10) / 10 : null;
+    const averageCostPerMile = totalMilesDriven > 0 ? Math.round((totalSpent / totalMilesDriven) * 100) / 100 : null;
+
+    res.json({
+      success: true,
+      data: {
+        averageMpg,
+        averageCostPerMile,
+        totalMilesDriven: Math.round(totalMilesDriven),
+        totalLitresUsed: Math.round(totalLitresUsed * 10) / 10,
+        totalSpent: Math.round(totalSpent * 100) / 100,
+        entries: efficiencyData
+      }
+    });
+  } catch (error) {
+    console.error('Failed to calculate efficiency metrics:', error);
+    next(createError('Failed to calculate efficiency metrics', 500));
   }
 });
 
