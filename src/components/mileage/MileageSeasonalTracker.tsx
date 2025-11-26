@@ -48,11 +48,12 @@ const seasonConfig: Record<UKSeason, { name: string; icon: string; color: string
 };
 
 export const MileageSeasonalTracker: React.FC = () => {
-  const { getAllSeasonalData } = useMileageStore();
+  const { getAllSeasonalData, entries } = useMileageStore();
 
+  // Re-calculate when entries change
   const seasonalData = useMemo(() => {
     return getAllSeasonalData();
-  }, [getAllSeasonalData]);
+  }, [getAllSeasonalData, entries]);
 
   // Get current season
   const currentSeason = useMemo((): UKSeason => {
