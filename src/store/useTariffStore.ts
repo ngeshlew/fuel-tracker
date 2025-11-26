@@ -20,7 +20,6 @@ interface TariffState {
   resetToDefaults: () => void;
   validateTariffDates: (tariff: TariffInfo) => { valid: boolean; error?: string };
   checkDateOverlap: (startDate: string, endDate: string | undefined, excludeId?: string) => boolean;
-  mergeTariffFromStatement: (statement: { supplier: string; periodStart: Date; periodEnd: Date; unitRate: number; standingCharge: number; accountNumber?: string; meterNumber?: string }) => void;
 }
 
 export const useTariffStore = create<TariffState>()(
@@ -274,34 +273,6 @@ export const useTariffStore = create<TariffState>()(
         return false;
       },
 
-      mergeTariffFromStatement: (statement) => {
-        const { addHistoricalTariff, setCurrentTariff } = get();
-        
-        const tariffData: TariffInfo = {
-          id: `tariff-statement-${Date.now()}`,
-          provider: statement.supplier,
-          tariffName: `${statement.supplier} Statement Tariff`,
-          productType: 'Variable',
-          unitRate: statement.unitRate,
-          standingCharge: statement.standingCharge,
-          startDate: statement.periodStart.toISOString().split('T')[0],
-          endDate: statement.periodEnd.toISOString().split('T')[0],
-          paymentMethod: 'Direct Debit',
-          earlyExitFee: 0,
-          accountNumber: statement.accountNumber,
-          meterNumber: statement.meterNumber,
-          estimatedAnnualUsage: 1180.1,
-          estimatedAnnualCost: 0,
-        };
-
-        // Check if this is current or historical
-        const today = new Date();
-        if (new Date(statement.periodEnd) >= today) {
-          setCurrentTariff(tariffData);
-        } else {
-          addHistoricalTariff(tariffData);
-        }
-      },
     }),
     {
       name: 'tariff-store',

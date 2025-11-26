@@ -46,13 +46,6 @@ export const UserGuide: React.FC<UserGuideProps> = ({
                 <p className="text-xs text-muted-foreground">Switch to the Analytics tab to view consumption trends and charts.</p>
               </div>
             </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-6 h-6 bg-electric-purple/20  flex items-center justify-center text-xs ">3</div>
-              <div>
-                <p className="">Upload Statements</p>
-                <p className="text-xs text-muted-foreground">Use the Statements tab to upload and process your energy bills.</p>
-              </div>
-            </div>
           </div>
         </div>
       )
@@ -69,12 +62,6 @@ export const UserGuide: React.FC<UserGuideProps> = ({
               <p className=" mb-2">Manual Entry</p>
               <p className="text-xs text-muted-foreground">
                 Click the "Add Reading" button, enter your meter reading, select the date, and add any notes.
-              </p>
-            </div>
-            <div className="p-4 bg-muted/20 ">
-              <p className=" mb-2">Statement Upload</p>
-              <p className="text-xs text-muted-foreground">
-                Upload PDF, CSV, or Excel files containing your energy statements for automatic processing.
               </p>
             </div>
             <div className="p-4 bg-muted/20 ">

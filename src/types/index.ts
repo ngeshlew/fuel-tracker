@@ -29,8 +29,69 @@ export interface FuelTopup {
   updatedAt: Date;
 }
 
-// Keep EnergyStatement for backward compatibility or remove if not needed
-// For fuel tracking, we primarily use FuelTopup
+// Mileage tracking types
+export interface MileageEntry {
+  id: string;
+  vehicleId: string;
+  date: Date;
+  odometerReading: number;      // Current odometer reading in miles
+  tripDistance?: number;        // Optional: specific trip distance
+  tripPurpose?: 'COMMUTE' | 'BUSINESS' | 'LEISURE' | 'HOLIDAY' | 'OTHER'; // Trip purpose category
+  notes?: string;
+  linkedFuelTopupId?: string;   // If mileage came from a fuel topup
+  type: 'MANUAL' | 'FUEL_LINKED';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Mileage chart data types
+export interface MileageChartDataPoint {
+  date: string;
+  miles: number;
+  odometerReading?: number;
+  tripDistance?: number;
+  tripPurpose?: string;
+  label?: string;
+}
+
+// UK Seasons for seasonal tracking
+export type UKSeason = 'SPRING' | 'SUMMER' | 'AUTUMN' | 'WINTER';
+
+export interface SeasonalMileageData {
+  season: UKSeason;
+  year: number;
+  totalMiles: number;
+  averageDailyMiles: number;
+  entryCount: number;
+  startDate: Date;
+  endDate: Date;
+}
+
+// Mileage form type
+export interface MileageEntryForm {
+  date: Date;
+  odometerReading: number;
+  tripDistance?: number;
+  tripPurpose?: 'COMMUTE' | 'BUSINESS' | 'LEISURE' | 'HOLIDAY' | 'OTHER';
+  notes?: string;
+}
+
+// Trip purpose constants
+export const TRIP_PURPOSES = {
+  COMMUTE: 'COMMUTE',
+  BUSINESS: 'BUSINESS',
+  LEISURE: 'LEISURE',
+  HOLIDAY: 'HOLIDAY',
+  OTHER: 'OTHER',
+} as const;
+
+// UK Seasons constants with month ranges
+export const UK_SEASONS = {
+  SPRING: { name: 'Spring', months: [2, 3, 4] },      // March, April, May (0-indexed: 2, 3, 4)
+  SUMMER: { name: 'Summer', months: [5, 6, 7] },      // June, July, August
+  AUTUMN: { name: 'Autumn', months: [8, 9, 10] },     // September, October, November
+  WINTER: { name: 'Winter', months: [11, 0, 1] },     // December, January, February
+} as const;
 
 export interface ConsumptionData {
   period: 'daily' | 'weekly' | 'monthly';

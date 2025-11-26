@@ -48,11 +48,6 @@ export const LazyExportOptions = lazy(() =>
   }))
 );
 
-export const LazyStatementUpload = lazy(() => 
-  import('./statements/StatementUpload').then(module => ({ 
-    default: module.StatementUpload 
-  }))
-);
 
 // Higher-order component for lazy loading with custom fallback
 export function withLazyLoading<T extends Record<string, any>>(

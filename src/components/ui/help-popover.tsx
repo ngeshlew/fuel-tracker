@@ -44,9 +44,8 @@ export const HelpPopover: React.FC<HelpPopoverProps> = ({ children }) => {
               Getting Started
             </h4>
             <ul className="text-sm space-y-1">
-              <li>• Add your first reading via “Add Reading”.</li>
+              <li>• Add your first reading via "Add Reading".</li>
               <li>• Explore Analytics to view trends and costs.</li>
-              <li>• Upload statements for automatic parsing.</li>
             </ul>
           </div>
 

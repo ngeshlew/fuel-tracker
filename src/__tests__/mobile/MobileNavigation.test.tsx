@@ -59,9 +59,6 @@ describe('MobileNavigation', () => {
     renderWithRouter(<MobileNavigation />);
     
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
-    expect(screen.getByText('Insights')).toBeInTheDocument();
-    expect(screen.getByText('Analytics')).toBeInTheDocument();
-    expect(screen.getByText('Statements')).toBeInTheDocument();
     expect(screen.getByText('Settings')).toBeInTheDocument();
   });
 

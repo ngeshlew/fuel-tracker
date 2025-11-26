@@ -98,6 +98,21 @@ const lucideIconMap: Record<string, keyof typeof LucideIcons> = {
   'send-message-dm-inbox': 'Send',
   'table-panel-window-sidebar': 'Layout',
   'zap-light-energy': 'Zap',
+  
+  // Mileage & Vehicle
+  'speedometer': 'Gauge',
+  'gauge': 'Gauge',
+  'car': 'Car',
+  'road': 'Route',
+  'map-pin': 'MapPin',
+  'navigation': 'Navigation',
+  'fuel': 'Fuel',
+  'minus': 'Minus',
+  'edit': 'Edit',
+  'trash-delete': 'Trash2',
+  'sun': 'Sun',
+  'cloud': 'Cloud',
+  'snowflake': 'Snowflake',
 };
 
 export type IconName = keyof typeof lucideIconMap;

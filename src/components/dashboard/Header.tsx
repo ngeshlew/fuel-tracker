@@ -1,19 +1,25 @@
 import { FC, useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserMenu } from '../auth/UserMenu';
 import { AuthModal } from '../auth/AuthModal';
-import { NotificationBell } from '../notifications/NotificationBell';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Icon } from "@/components/ui/icon";
 import { useFuelStore } from '@/store/useFuelStore';
+import { useMileageStore } from '@/store/useMileageStore';
 import { KeyboardShortcutsPopover } from '@/components/ui/keyboard-shortcuts-dialog';
 import { HelpPopover } from '@/components/ui/help-popover';
 
 export const Header: FC = () => {
+  const location = useLocation();
   const { toggleTopupPanel, chartData } = useFuelStore();
+  const { toggleEntryPanel } = useMileageStore();
   const { isAuthenticated } = useAuthStore();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  
+  // Check if we're on the mileage page
+  const isMileagePage = location.pathname === '/mileage';
 
   // Calculate average comparison message (for fuel, we'll use a different metric)
   const averageMessage = useMemo(() => {
@@ -46,17 +52,21 @@ export const Header: FC = () => {
         return;
       }
 
-      // 'A' key to open Add Topup panel
+      // 'A' key to open Add panel (Topup or Mileage depending on page)
       if (e.key.toLowerCase() === 'a' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
-        toggleTopupPanel(true);
+        if (isMileagePage) {
+          toggleEntryPanel(true);
+        } else {
+          toggleTopupPanel(true);
+        }
       }
       
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleTopupPanel]);
+  }, [toggleTopupPanel, toggleEntryPanel, isMileagePage]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background backdrop-blur supports-[backdrop-filter]:bg-background">
@@ -108,23 +118,16 @@ export const Header: FC = () => {
               </Button>
             </KeyboardShortcutsPopover>
             
-            {/* Primary Action: Add Topup - Responsive sizing */}
+            {/* Primary Action: Add Topup or Mileage - Responsive sizing */}
             <Button 
-              onClick={() => toggleTopupPanel(true)} 
+              onClick={() => isMileagePage ? toggleEntryPanel(true) : toggleTopupPanel(true)} 
               size="lg"
               className="flex items-center gap-1.5 sm:gap-2 h-10 sm:h-12 px-3 sm:px-6 text-sm sm:text-base font-normal min-w-[100px] sm:min-w-[160px] flex-shrink-0"
             >
               <Icon name="add-new-plus" className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="hidden sm:inline">Add Topup</span>
+              <span className="hidden sm:inline">{isMileagePage ? 'Add Mileage' : 'Add Topup'}</span>
               <span className="sm:hidden">Add</span>
             </Button>
-            
-            {/* Notifications */}
-            {isAuthenticated && (
-              <div className="hidden sm:block">
-                <NotificationBell />
-              </div>
-            )}
             
             {/* Authentication */}
             {isAuthenticated ? (

@@ -13,7 +13,7 @@ export interface GeneralSettings {
 export interface DisplaySettings {
   theme: 'light' | 'dark' | 'system';
   chartType: 'line' | 'area' | 'bar';
-  defaultView: 'dashboard' | 'analytics' | 'statements';
+  defaultView: 'dashboard' | 'analytics';
   showTooltips: boolean;
   showDebugInfo: boolean;
   compactMode: boolean;
