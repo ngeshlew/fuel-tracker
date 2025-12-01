@@ -13,6 +13,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  Cell,
 } from 'recharts';
 
 // UK Season month ranges
@@ -78,6 +79,8 @@ export const MileageSeasonalTracker: React.FC = () => {
     return seasons.map(season => {
       const result: any = {
         season: seasonConfig[season].name,
+        seasonKey: season,
+        seasonColor: seasonConfig[season].color,
       };
       
       years.forEach(year => {
@@ -217,16 +220,22 @@ export const MileageSeasonalTracker: React.FC = () => {
                       <Bar
                         dataKey={`year${years[0]}`}
                         name={years[0].toString()}
-                        fill="var(--color-muted-foreground)"
                         radius={[4, 4, 0, 0]}
                         opacity={0.6}
-                      />
+                      >
+                        {comparisonData.map((entry, index) => (
+                          <Cell key={`cell-${index}-year${years[0]}`} fill={entry.seasonColor} />
+                        ))}
+                      </Bar>
                       <Bar
                         dataKey={`year${years[1]}`}
                         name={years[1].toString()}
-                        fill="var(--color-primary)"
                         radius={[4, 4, 0, 0]}
-                      />
+                      >
+                        {comparisonData.map((entry, index) => (
+                          <Cell key={`cell-${index}-year${years[1]}`} fill={entry.seasonColor} />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

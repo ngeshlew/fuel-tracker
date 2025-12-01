@@ -1,5 +1,4 @@
 import { FC, useState, useEffect } from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { Header } from '../dashboard/Header';
 import { AppSidebar } from '../dashboard/AppSidebar';
 import { MileageSummaryCards } from './MileageSummaryCards';
@@ -39,14 +38,13 @@ export const MileageDashboard: FC = () => {
       <MobileNavigation />
       
       {/* Responsive Layout */}
-      <SidebarProvider defaultOpen={false}>
-        <div className="lg:flex w-screen">
-          {/* Sidebar - Desktop only */}
-          <div className="hidden lg:block">
-            <AppSidebar />
-          </div>
-          
-          <main className="flex-1 lg:ml-0">
+      <div className="lg:flex w-screen">
+        {/* Sidebar - Desktop only */}
+        <div className="hidden lg:block">
+          <AppSidebar />
+        </div>
+        
+        <main className="flex-1 lg:ml-0">
             {/* Header - show on all sizes so top nav actions are visible */}
             <Header />
             
@@ -119,7 +117,6 @@ export const MileageDashboard: FC = () => {
             
           </main>
         </div>
-      </SidebarProvider>
     </>
   );
 };
