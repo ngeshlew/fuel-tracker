@@ -7,7 +7,6 @@ import {
   SidebarBody,
   SidebarLink,
 } from '@/components/ui/animated-sidebar';
-import { cn } from '@/lib/utils';
 
 const navigationItems = [
   { 
