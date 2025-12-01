@@ -27,12 +27,13 @@ interface MileageBreakdownProps {
   currentMonth: Date;
 }
 
+// Neutral greyscale palette for weekly bars
 const COLORS = [
-  'var(--color-primary)',
-  'var(--color-accent-red)',
-  'var(--color-success)',
-  'var(--color-warning)',
-  'var(--color-info)',
+  'hsl(0 0% 15%)',
+  'hsl(0 0% 30%)',
+  'hsl(0 0% 45%)',
+  'hsl(0 0% 60%)',
+  'hsl(0 0% 75%)',
 ];
 
 export const MileageBreakdown: React.FC<MileageBreakdownProps> = ({ currentMonth }) => {

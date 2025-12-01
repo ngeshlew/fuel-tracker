@@ -14,13 +14,15 @@ interface SummaryCardProps {
   value: string;
   changeValue: string;
   trendIcon: React.ReactNode;
+  footerLabel: string;
 }
 
 const SummaryCard: React.FC<SummaryCardProps> = ({ 
   title, 
   value, 
   changeValue,
-  trendIcon
+  trendIcon,
+  footerLabel,
 }) => {
   const isPositive = changeValue.startsWith('+');
   const isNegative = changeValue.startsWith('-');
@@ -61,7 +63,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
         />
         
         <div className="text-xs uppercase tracking-normal text-muted-foreground">
-          VS LAST MONTH
+          {footerLabel}
         </div>
       </CardHeader>
     </Card>
@@ -182,24 +184,28 @@ export const MileageSummaryCards: React.FC<MileageSummaryCardsProps> = ({ curren
       value: metrics.totalDrivenSincePurchase > 0 ? `${Math.round(metrics.totalDrivenSincePurchase).toLocaleString()}` : '—',
       changeValue: metrics.totalDrivenSincePurchase > 0 ? `${metrics.overallAvgDaily.toFixed(1)} mi/day avg` : 'No data',
       trendIcon: metrics.totalDrivenSincePurchase > 0 ? <Icon name="car" className="h-4 w-4" /> : null,
+      footerLabel: 'OVERALL AVERAGE',
     },
     {
       title: 'This Month',
       value: metrics.totalMiles > 0 ? `${Math.round(metrics.totalMiles).toLocaleString()}` : '—',
       changeValue: metrics.totalMiles > 0 ? formatChange(metrics.milesChange) : 'No data',
       trendIcon: metrics.totalMiles > 0 ? getTrendIcon(metrics.milesChange) : null,
+      footerLabel: 'VS LAST MONTH',
     },
     {
       title: 'Avg Daily',
       value: metrics.avgDailyMiles > 0 ? `${metrics.avgDailyMiles.toFixed(1)} mi` : '—',
       changeValue: metrics.avgDailyMiles > 0 ? formatChange(metrics.avgDailyChange) : 'No data',
       trendIcon: metrics.avgDailyMiles > 0 ? getTrendIcon(metrics.avgDailyChange) : null,
+      footerLabel: 'VS LAST MONTH',
     },
     {
       title: 'Efficiency',
       value: metrics.efficiency > 0 ? `${metrics.efficiency.toFixed(1)} mi/L` : '—',
       changeValue: metrics.efficiency > 0 ? formatChange(metrics.efficiencyChange) : 'No data',
       trendIcon: metrics.efficiency > 0 ? getTrendIcon(metrics.efficiencyChange) : null,
+      footerLabel: 'VS LAST MONTH',
     },
   ];
 
@@ -212,6 +218,7 @@ export const MileageSummaryCards: React.FC<MileageSummaryCardsProps> = ({ curren
           value={card.value}
           changeValue={card.changeValue}
           trendIcon={card.trendIcon}
+          footerLabel={card.footerLabel}
         />
       ))}
     </div>

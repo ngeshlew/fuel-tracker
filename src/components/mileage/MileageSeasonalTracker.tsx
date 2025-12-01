@@ -24,25 +24,25 @@ const seasonConfig: Record<UKSeason, { name: string; icon: string; color: string
   SPRING: {
     name: 'Spring',
     icon: 'sun',
-    color: 'var(--color-success)',
+    color: 'var(--color-season-spring)',
     months: 'Mar - May',
   },
   SUMMER: {
     name: 'Summer',
     icon: 'sun',
-    color: 'var(--color-warning)',
+    color: 'var(--color-season-summer)',
     months: 'Jun - Aug',
   },
   AUTUMN: {
     name: 'Autumn',
     icon: 'cloud',
-    color: 'var(--color-accent-red)',
+    color: 'var(--color-season-autumn)',
     months: 'Sep - Nov',
   },
   WINTER: {
     name: 'Winter',
     icon: 'snowflake',
-    color: 'var(--color-info)',
+    color: 'var(--color-season-winter)',
     months: 'Dec - Feb',
   },
 };
