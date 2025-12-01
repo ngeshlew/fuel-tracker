@@ -1,7 +1,6 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { LayoutDashboard, Gauge, Settings, Zap } from 'lucide-react';
-import { motion } from 'framer-motion';
 import {
   Sidebar,
   SidebarBody,
@@ -12,19 +11,25 @@ const navigationItems = [
   { 
     name: 'Dashboard', 
     url: '/', 
-    icon: <LayoutDashboard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+    iconName: 'LayoutDashboard' as const
   },
   { 
     name: 'Mileage', 
     url: '/mileage', 
-    icon: <Gauge className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+    iconName: 'Gauge' as const
   },
   { 
     name: 'Settings', 
     url: '/settings', 
-    icon: <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+    iconName: 'Settings' as const
   },
 ];
+
+const iconComponents = {
+  LayoutDashboard,
+  Gauge,
+  Settings,
+};
 
 export const Logo = () => {
   return (
@@ -32,13 +37,9 @@ export const Logo = () => {
       <div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0 flex items-center justify-center">
         <Zap className="h-3 w-3 text-white dark:text-black" />
       </div>
-      <motion.span
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="font-medium text-black dark:text-white whitespace-pre uppercase tracking-wide"
-      >
+      <span className="font-medium text-black dark:text-white whitespace-pre uppercase tracking-wide">
         Tracker
-      </motion.span>
+      </span>
     </div>
   );
 };
@@ -66,13 +67,14 @@ export const AppSidebar: React.FC = () => {
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.url || 
                 (item.url === '/' && location.pathname === '/dashboard');
+              const IconComponent = iconComponents[item.iconName];
               return (
                 <SidebarLink 
                   key={item.name} 
                   link={{
                     label: item.name,
                     href: item.url,
-                    icon: item.icon,
+                    icon: <IconComponent className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
                   }}
                   isActive={isActive}
                 />
