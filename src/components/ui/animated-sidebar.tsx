@@ -67,11 +67,7 @@ export const Sidebar = ({
   );
 };
 
-export const SidebarBody = (props: React.HTMLAttributes<HTMLDivElement>) => {
-  return <DesktopSidebar {...props} />;
-};
-
-export const DesktopSidebar = ({
+export const SidebarBody = ({
   className,
   children,
   ...props
