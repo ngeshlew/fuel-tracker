@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import React, { useState, createContext, useContext } from "react";
-import { motion } from "framer-motion";
 
 interface Links {
   label: string;
@@ -68,7 +67,7 @@ export const Sidebar = ({
   );
 };
 
-export const SidebarBody = (props: React.ComponentProps<typeof motion.div>) => {
+export const SidebarBody = (props: React.HTMLAttributes<HTMLDivElement>) => {
   return <DesktopSidebar {...props} />;
 };
 
@@ -76,23 +75,23 @@ export const DesktopSidebar = ({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof motion.div>) => {
+}: React.HTMLAttributes<HTMLDivElement>) => {
   const { open, setOpen, animate } = useSidebar();
+  const width = animate ? (open ? "300px" : "60px") : "300px";
+  
   return (
-    <motion.div
+    <div
       className={cn(
-        "h-screen px-4 py-4 hidden md:flex md:flex-col bg-neutral-100 dark:bg-neutral-800 w-[300px] flex-shrink-0",
+        "h-screen px-4 py-4 hidden md:flex md:flex-col bg-neutral-100 dark:bg-neutral-800 flex-shrink-0 transition-all duration-200 ease-in-out",
         className
       )}
-      animate={{
-        width: animate ? (open ? "300px" : "60px") : "300px",
-      }}
+      style={{ width }}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
       {...props}
     >
       {children}
-    </motion.div>
+    </div>
   );
 };
 
@@ -108,6 +107,8 @@ export const SidebarLink = ({
   props?: React.ComponentProps<typeof Link>;
 }) => {
   const { open, animate } = useSidebar();
+  const isTextVisible = !animate || open;
+  
   return (
     <Link
       to={link.href}
@@ -122,9 +123,8 @@ export const SidebarLink = ({
       {link.icon}
       <span
         className={cn(
-          "text-sm group-hover/sidebar:translate-x-1 transition-all duration-150 whitespace-pre inline-block",
-          animate && !open && "opacity-0 w-0 overflow-hidden",
-          (!animate || open) && "opacity-100"
+          "text-sm group-hover/sidebar:translate-x-1 transition-all duration-150 whitespace-pre",
+          isTextVisible ? "opacity-100 inline-block" : "opacity-0 w-0 overflow-hidden"
         )}
       >
         {link.label}

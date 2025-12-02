@@ -83,10 +83,10 @@ export const AppSidebar: React.FC = () => {
           </div>
         </div>
         <div>
-          <div className="p-4">
+        <div className="p-4">
             <p className="text-xs uppercase tracking-tight text-neutral-600 dark:text-neutral-400 truncate">
-              user@example.com
-            </p>
+            user@example.com
+          </p>
           </div>
         </div>
       </SidebarBody>
