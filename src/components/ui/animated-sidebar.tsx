@@ -14,13 +14,17 @@ interface SidebarContextProps {
   animate: boolean;
 }
 
-const SidebarContext = createContext<SidebarContextProps | undefined>(
-  undefined
-);
+const initialSidebarState: SidebarContextProps = {
+  open: false,
+  setOpen: () => null,
+  animate: true,
+};
+
+const SidebarContext = createContext<SidebarContextProps>(initialSidebarState);
 
 export const useSidebar = () => {
   const context = useContext(SidebarContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useSidebar must be used within a SidebarProvider");
   }
   return context;
