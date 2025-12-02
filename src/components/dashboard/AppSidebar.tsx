@@ -2,7 +2,6 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { LayoutDashboard, Gauge, Settings, Zap } from 'lucide-react';
 import {
-  Sidebar,
   SidebarBody,
   SidebarLink,
 } from '@/components/ui/animated-sidebar';
@@ -56,40 +55,37 @@ export const LogoIcon = () => {
 
 export const AppSidebar: React.FC = () => {
   const location = useLocation();
-  const [open, setOpen] = React.useState(false);
 
   return (
-    <Sidebar open={open} setOpen={setOpen}>
-      <SidebarBody className="justify-between gap-10">
-        <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-          {open ? <Logo /> : <LogoIcon />}
-          <div className="mt-8 flex flex-col gap-2">
-            {navigationItems.map((item) => {
-              const isActive = location.pathname === item.url || 
-                (item.url === '/' && location.pathname === '/dashboard');
-              const IconComponent = iconComponents[item.iconName];
-              return (
-                <SidebarLink 
-                  key={item.name} 
-                  link={{
-                    label: item.name,
-                    href: item.url,
-                    icon: <IconComponent className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
-                  }}
-                  isActive={isActive}
-                />
-              );
-            })}
-          </div>
+    <SidebarBody className="justify-between gap-10">
+      <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+        <Logo />
+        <div className="mt-8 flex flex-col gap-2">
+          {navigationItems.map((item) => {
+            const isActive = location.pathname === item.url || 
+              (item.url === '/' && location.pathname === '/dashboard');
+            const IconComponent = iconComponents[item.iconName];
+            return (
+              <SidebarLink 
+                key={item.name} 
+                link={{
+                  label: item.name,
+                  href: item.url,
+                  icon: <IconComponent className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+                }}
+                isActive={isActive}
+              />
+            );
+          })}
         </div>
-        <div>
+      </div>
+      <div>
         <div className="p-4">
-            <p className="text-xs uppercase tracking-tight text-neutral-600 dark:text-neutral-400 truncate">
+          <p className="text-xs uppercase tracking-tight text-neutral-600 dark:text-neutral-400 truncate">
             user@example.com
           </p>
-          </div>
         </div>
-      </SidebarBody>
-    </Sidebar>
+      </div>
+    </SidebarBody>
   );
 };

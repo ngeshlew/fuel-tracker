@@ -13,6 +13,7 @@ import { MileageDashboard } from './components/mileage/MileageDashboard';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { useFuelStore } from './store/useFuelStore';
+import { SidebarProvider } from '@/components/ui/animated-sidebar';
 import './index.css';
 
 function App() {
@@ -76,23 +77,25 @@ function App() {
   return (
     <ThemeProvider defaultTheme="mono" storageKey="fuel-tracker-theme">
       <ErrorBoundary>
-        <Router>
-          <div className="min-h-screen bg-background text-foreground">
-            <div>
-              <Routes>
-              <Route path="/login" element={<LoginRoute />} />
-              <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/mileage" element={<ProtectedRoute><MileageDashboard /></ProtectedRoute>} />
-              <Route path="/insights" element={<ProtectedRoute><InsightsLayout /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><SettingsLayout /></ProtectedRoute>} />
-              </Routes>
+        <SidebarProvider>
+          <Router>
+            <div className="min-h-screen bg-background text-foreground">
+              <div>
+                <Routes>
+                <Route path="/login" element={<LoginRoute />} />
+                <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/mileage" element={<ProtectedRoute><MileageDashboard /></ProtectedRoute>} />
+                <Route path="/insights" element={<ProtectedRoute><InsightsLayout /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><SettingsLayout /></ProtectedRoute>} />
+                </Routes>
+              </div>
             </div>
-          </div>
-        </Router>
-        <PWAInstallPrompt />
-        <Toaster />
-        <ToastContainer />
+          </Router>
+          <PWAInstallPrompt />
+          <Toaster />
+          <ToastContainer />
+        </SidebarProvider>
       </ErrorBoundary>
     </ThemeProvider>
   );
