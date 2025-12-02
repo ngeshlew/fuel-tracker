@@ -1,7 +1,6 @@
 import { FC, useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserMenu } from '../auth/UserMenu';
 import { AuthModal } from '../auth/AuthModal';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -72,11 +71,6 @@ export const Header: FC = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-background backdrop-blur supports-[backdrop-filter]:bg-background">
       <div className="mx-auto max-w-7xl">
         <div className="flex h-14 sm:h-16 items-center justify-between gap-2">
-          {/* Sidebar Trigger */}
-          <div className="flex items-center flex-shrink-0">
-            <SidebarTrigger />
-          </div>
-
           {/* Navigation and Actions */}
           <div className="flex items-center gap-1.5 sm:gap-3 flex-1 justify-end">
             {/* Average Comparison Message */}
