@@ -42,14 +42,14 @@ export const Dashboard: FC = () => {
             {/* Header - show on all sizes so top nav actions are visible */}
             <Header />
             
-            {/* Dashboard Content - Responsive */}
+            {/* Fuel Content - Responsive */}
             <div className="px-4 sm:px-6 pt-14 lg:pt-6 pb-20 lg:pb-6">
               <div className="mx-auto max-w-7xl w-full">
                 {/* Page Header - Reduced spacing (2x less) */}
                 <div className="mb-8" style={{ marginBottom: 'var(--space-xl)' }}>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                      <h1 className="text-2xl font-normal tracking-tight uppercase">Dashboard</h1>
+                      <h1 className="text-2xl font-normal tracking-tight uppercase">Fuel</h1>
                       <p className="text-muted-foreground mt-1 text-sm">
                         Track your fuel consumption and costs
                       </p>

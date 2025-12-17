@@ -19,8 +19,8 @@ interface MobileNavItem {
 }
 
 const navigationItems: MobileNavItem[] = [
-  { name: 'Dashboard', href: '/', iconName: 'home-house', current: true },
   { name: 'Mileage', href: '/mileage', iconName: 'speedometer', current: false },
+  { name: 'Fuel', href: '/', iconName: 'home-house', current: true },
   { name: 'Settings', href: '/settings', iconName: 'adjust-settings-horizontal', current: false },
 ];
 
@@ -32,7 +32,7 @@ export const MobileNavigation: React.FC = () => {
   const { toggleTopupPanel } = useFuelStore();
   const { user, logout, isAuthenticated } = useAuthStore();
   
-  // Check if we're on Dashboard page
+  // Check if we're on Fuel page (formerly Dashboard)
   const isDashboard = location.pathname === '/' || location.pathname === '/dashboard';
   
   const getInitials = (name: string) => {

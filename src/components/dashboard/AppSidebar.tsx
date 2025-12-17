@@ -8,14 +8,14 @@ import {
 
 const navigationItems = [
   { 
-    name: 'Dashboard', 
-    url: '/', 
-    iconName: 'LayoutDashboard' as const
-  },
-  { 
     name: 'Mileage', 
     url: '/mileage', 
     iconName: 'Gauge' as const
+  },
+  { 
+    name: 'Fuel', 
+    url: '/', 
+    iconName: 'LayoutDashboard' as const
   },
   { 
     name: 'Settings', 
