@@ -577,22 +577,28 @@ export const useMileageStore = create<MileageState>()(
           
           const totalMiles = get().getTotalMiles(start, end);
           
-          // Days from first entry that contributes to this season to last entry in season
-          const lastEntryDate = new Date(entriesInSeason[entriesInSeason.length - 1].date);
-          let firstRelevantDate: Date;
-          if (entriesBeforeSeason.length > 0) {
-            firstRelevantDate = new Date(entriesBeforeSeason[entriesBeforeSeason.length - 1].date);
-          } else {
-            firstRelevantDate = new Date(entriesInSeason[0].date);
-          }
+          // Calculate days for average daily calculation
+          // For completed seasons: use full season date range
+          // For current/incomplete seasons: use days from season start to today
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const seasonEnd = new Date(end);
+          seasonEnd.setHours(23, 59, 59, 999);
           
-          const daysWithData = Math.max(1, Math.ceil((lastEntryDate.getTime() - firstRelevantDate.getTime()) / (1000 * 60 * 60 * 24)));
+          let daysForAverage: number;
+          if (today > seasonEnd) {
+            // Season is complete - use full season date range
+            daysForAverage = Math.max(1, Math.ceil((seasonEnd.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+          } else {
+            // Season is current/incomplete - use days from start to today
+            daysForAverage = Math.max(1, Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+          }
           
           return {
             season,
             year,
             totalMiles,
-            averageDailyMiles: totalMiles / daysWithData,
+            averageDailyMiles: totalMiles / daysForAverage,
             entryCount: entriesInSeason.length,
             startDate: start,
             endDate: end,
