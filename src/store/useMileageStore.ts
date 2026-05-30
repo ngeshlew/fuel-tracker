@@ -144,9 +144,11 @@ export const useMileageStore = create<MileageState>()(
               };
               
               set((state) => ({
-                entries: [...state.entries, newEntry].sort(
-                  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-                ),
+                entries: [...state.entries, newEntry].sort((a, b) => {
+                  const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+                  if (dateDiff !== 0) return dateDiff;
+                  return b.odometerReading - a.odometerReading;
+                }),
                 isLoading: false,
               }));
               
@@ -213,12 +215,16 @@ export const useMileageStore = create<MileageState>()(
                         updatedAt: new Date(updatedData.updatedAt),
                       }
                     : entry
-                ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+                ).sort((a, b) => {
+                  const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+                  if (dateDiff !== 0) return dateDiff;
+                  return b.odometerReading - a.odometerReading;
+                }),
                 isLoading: false,
               }));
-              
+
               get().recalculateAnalytics();
-              
+
               useToastStore.getState().showToast(
                 'Mileage entry has been updated',
                 'success'
@@ -304,11 +310,13 @@ export const useMileageStore = create<MileageState>()(
                 updatedAt: new Date(entry.updatedAt),
               }));
               
-              set({ 
-                entries: entries.sort(
-                  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-                ),
-                isLoading: false 
+              set({
+                entries: entries.sort((a, b) => {
+                  const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+                  if (dateDiff !== 0) return dateDiff;
+                  return b.odometerReading - a.odometerReading;
+                }),
+                isLoading: false
               });
               get().recalculateAnalytics();
             } else {
@@ -354,9 +362,11 @@ export const useMileageStore = create<MileageState>()(
           
           if (newEntries.length > 0) {
             set((state) => ({
-              entries: [...state.entries, ...newEntries].sort(
-                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-              ),
+              entries: [...state.entries, ...newEntries].sort((a, b) => {
+                const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+                if (dateDiff !== 0) return dateDiff;
+                return b.odometerReading - a.odometerReading;
+              }),
             }));
             
             get().recalculateAnalytics();
@@ -435,11 +445,12 @@ export const useMileageStore = create<MileageState>()(
 
         calculateChartData: () => {
           const { entries } = get();
-          
-          // Sort entries by date
-          const sortedEntries = [...entries].sort(
-            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-          );
+
+          const sortedEntries = [...entries].sort((a, b) => {
+            const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+            if (dateDiff !== 0) return dateDiff;
+            return a.odometerReading - b.odometerReading;
+          });
           
           // Calculate daily mileage (difference between consecutive readings)
           const chartData: MileageChartDataPoint[] = [];
@@ -470,10 +481,11 @@ export const useMileageStore = create<MileageState>()(
           
           if (entries.length === 0) return 0;
           
-          // Sort all entries by date
-          const allSorted = [...entries].sort(
-            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-          );
+          const allSorted = [...entries].sort((a, b) => {
+            const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+            if (dateDiff !== 0) return dateDiff;
+            return a.odometerReading - b.odometerReading;
+          });
           
           if (!startDate || !endDate) {
             // No date range - return total of all miles driven
@@ -522,9 +534,11 @@ export const useMileageStore = create<MileageState>()(
             const { entries } = get();
             if (entries.length < 2) return 0;
             
-            const sorted = [...entries].sort(
-              (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-            );
+            const sorted = [...entries].sort((a, b) => {
+              const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+              if (dateDiff !== 0) return dateDiff;
+              return a.odometerReading - b.odometerReading;
+            });
             
             const firstDate = new Date(sorted[0].date);
             const lastDate = new Date(sorted[sorted.length - 1].date);
@@ -562,10 +576,12 @@ export const useMileageStore = create<MileageState>()(
           // Need at least 1 entry in the season and either another entry in season
           // or an entry before the season to calculate miles
           const { entries } = get();
-          const allSorted = [...entries].sort(
-            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-          );
-          
+          const allSorted = [...entries].sort((a, b) => {
+            const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+            if (dateDiff !== 0) return dateDiff;
+            return a.odometerReading - b.odometerReading;
+          });
+
           const entriesBeforeSeason = allSorted.filter((entry) => {
             const entryDate = new Date(entry.date);
             return entryDate < start;
