@@ -56,11 +56,13 @@ export const MileageLog: React.FC<MileageLogProps> = ({ onEdit }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<MileageEntry | null>(null);
 
-  // Sort entries by date (most recent first)
+  // Sort entries by date (most recent first), then by odometer reading (highest first) as tiebreaker
   const sortedEntries = useMemo(() => {
-    return [...entries].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    return [...entries].sort((a, b) => {
+      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      return b.odometerReading - a.odometerReading;
+    });
   }, [entries]);
 
   // Group entries by month
@@ -85,7 +87,11 @@ export const MileageLog: React.FC<MileageLogProps> = ({ onEdit }) => {
         return {
           key,
           label: monthLabel,
-          entries: entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          entries: entries.sort((a, b) => {
+            const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+            if (dateDiff !== 0) return dateDiff;
+            return b.odometerReading - a.odometerReading;
+          })
         };
       })
       .sort((a, b) => b.key.localeCompare(a.key)); // Sort months newest first
@@ -93,14 +99,18 @@ export const MileageLog: React.FC<MileageLogProps> = ({ onEdit }) => {
 
   // Calculate miles driven between consecutive entries
   const calculateMilesDriven = (entry: MileageEntry): number | null => {
-    const sortedByDate = [...entries].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    const sortedByOdometer = [...entries].sort(
+      (a, b) => {
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return a.odometerReading - b.odometerReading;
+      }
     );
-    const currentIndex = sortedByDate.findIndex((e) => e.id === entry.id);
-    
+    const currentIndex = sortedByOdometer.findIndex((e) => e.id === entry.id);
+
     if (currentIndex === 0) return null; // First entry, no previous reading
-    
-    const previousEntry = sortedByDate[currentIndex - 1];
+
+    const previousEntry = sortedByOdometer[currentIndex - 1];
     return entry.odometerReading - previousEntry.odometerReading;
   };
 
