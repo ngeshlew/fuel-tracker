@@ -56,10 +56,15 @@ export const MileageLog: React.FC<MileageLogProps> = ({ onEdit }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<MileageEntry | null>(null);
 
-  // Sort entries by date (most recent first), then by odometer reading (highest first) as tiebreaker
+  // Compare by calendar date (YYYY-MM-DD) only, ignoring time-of-day so that
+  // entries recorded at different times on the same day are treated as same-day.
+  const toDateKey = (d: Date | string) =>
+    new Date(d).toISOString().slice(0, 10);
+
+  // Sort: calendar date DESC, then odometer DESC within the same day
   const sortedEntries = useMemo(() => {
     return [...entries].sort((a, b) => {
-      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      const dateDiff = toDateKey(b.date).localeCompare(toDateKey(a.date));
       if (dateDiff !== 0) return dateDiff;
       return b.odometerReading - a.odometerReading;
     });
@@ -88,7 +93,7 @@ export const MileageLog: React.FC<MileageLogProps> = ({ onEdit }) => {
           key,
           label: monthLabel,
           entries: entries.sort((a, b) => {
-            const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+            const dateDiff = toDateKey(b.date).localeCompare(toDateKey(a.date));
             if (dateDiff !== 0) return dateDiff;
             return b.odometerReading - a.odometerReading;
           })
@@ -99,13 +104,11 @@ export const MileageLog: React.FC<MileageLogProps> = ({ onEdit }) => {
 
   // Calculate miles driven between consecutive entries
   const calculateMilesDriven = (entry: MileageEntry): number | null => {
-    const sortedByOdometer = [...entries].sort(
-      (a, b) => {
-        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
-        if (dateDiff !== 0) return dateDiff;
-        return a.odometerReading - b.odometerReading;
-      }
-    );
+    const sortedByOdometer = [...entries].sort((a, b) => {
+      const dateDiff = toDateKey(a.date).localeCompare(toDateKey(b.date));
+      if (dateDiff !== 0) return dateDiff;
+      return a.odometerReading - b.odometerReading;
+    });
     const currentIndex = sortedByOdometer.findIndex((e) => e.id === entry.id);
 
     if (currentIndex === 0) return null; // First entry, no previous reading
