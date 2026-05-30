@@ -84,8 +84,9 @@ export const MileageSummaryCards: React.FC<MileageSummaryCardsProps> = ({ curren
     const prevMonthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 0);
 
     // Total mileage since first entry (car purchase)
+    const toDateKey = (d: Date | string) => new Date(d).toISOString().slice(0, 10);
     const sortedEntries = [...entries].sort((a, b) => {
-      const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+      const dateDiff = toDateKey(a.date).localeCompare(toDateKey(b.date));
       if (dateDiff !== 0) return dateDiff;
       return a.odometerReading - b.odometerReading;
     });

@@ -52,6 +52,25 @@ interface MileageState {
   recalculateAnalytics: () => void;
 }
 
+// Extract YYYY-MM-DD calendar date string, stripping time-of-day so that entries
+// recorded at different times on the same day sort as same-day.
+const toDateKey = (d: Date | string): string =>
+  new Date(d).toISOString().slice(0, 10);
+
+// Descending comparator: newest calendar date first, highest odometer within same day
+const compareDesc = (a: { date: Date | string; odometerReading: number }, b: { date: Date | string; odometerReading: number }) => {
+  const dateDiff = toDateKey(b.date).localeCompare(toDateKey(a.date));
+  if (dateDiff !== 0) return dateDiff;
+  return b.odometerReading - a.odometerReading;
+};
+
+// Ascending comparator: oldest calendar date first, lowest odometer within same day
+const compareAsc = (a: { date: Date | string; odometerReading: number }, b: { date: Date | string; odometerReading: number }) => {
+  const dateDiff = toDateKey(a.date).localeCompare(toDateKey(b.date));
+  if (dateDiff !== 0) return dateDiff;
+  return a.odometerReading - b.odometerReading;
+};
+
 // UK Season month ranges
 const SPRING_MONTHS = [2, 3, 4]; // March, April, May
 const SUMMER_MONTHS = [5, 6, 7]; // June, July, August
@@ -144,11 +163,7 @@ export const useMileageStore = create<MileageState>()(
               };
               
               set((state) => ({
-                entries: [...state.entries, newEntry].sort((a, b) => {
-                  const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-                  if (dateDiff !== 0) return dateDiff;
-                  return b.odometerReading - a.odometerReading;
-                }),
+                entries: [...state.entries, newEntry].sort(compareDesc),
                 isLoading: false,
               }));
               
@@ -215,11 +230,7 @@ export const useMileageStore = create<MileageState>()(
                         updatedAt: new Date(updatedData.updatedAt),
                       }
                     : entry
-                ).sort((a, b) => {
-                  const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-                  if (dateDiff !== 0) return dateDiff;
-                  return b.odometerReading - a.odometerReading;
-                }),
+                ).sort(compareDesc),
                 isLoading: false,
               }));
 
@@ -311,11 +322,7 @@ export const useMileageStore = create<MileageState>()(
               }));
               
               set({
-                entries: entries.sort((a, b) => {
-                  const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-                  if (dateDiff !== 0) return dateDiff;
-                  return b.odometerReading - a.odometerReading;
-                }),
+                entries: entries.sort(compareDesc),
                 isLoading: false
               });
               get().recalculateAnalytics();
@@ -362,11 +369,7 @@ export const useMileageStore = create<MileageState>()(
           
           if (newEntries.length > 0) {
             set((state) => ({
-              entries: [...state.entries, ...newEntries].sort((a, b) => {
-                const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-                if (dateDiff !== 0) return dateDiff;
-                return b.odometerReading - a.odometerReading;
-              }),
+              entries: [...state.entries, ...newEntries].sort(compareDesc),
             }));
             
             get().recalculateAnalytics();
@@ -446,11 +449,7 @@ export const useMileageStore = create<MileageState>()(
         calculateChartData: () => {
           const { entries } = get();
 
-          const sortedEntries = [...entries].sort((a, b) => {
-            const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
-            if (dateDiff !== 0) return dateDiff;
-            return a.odometerReading - b.odometerReading;
-          });
+          const sortedEntries = [...entries].sort(compareAsc);
           
           // Calculate daily mileage (difference between consecutive readings)
           const chartData: MileageChartDataPoint[] = [];
@@ -481,12 +480,8 @@ export const useMileageStore = create<MileageState>()(
           
           if (entries.length === 0) return 0;
           
-          const allSorted = [...entries].sort((a, b) => {
-            const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
-            if (dateDiff !== 0) return dateDiff;
-            return a.odometerReading - b.odometerReading;
-          });
-          
+          const allSorted = [...entries].sort(compareAsc);
+
           if (!startDate || !endDate) {
             // No date range - return total of all miles driven
             if (allSorted.length < 2) return 0;
@@ -534,11 +529,7 @@ export const useMileageStore = create<MileageState>()(
             const { entries } = get();
             if (entries.length < 2) return 0;
             
-            const sorted = [...entries].sort((a, b) => {
-              const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
-              if (dateDiff !== 0) return dateDiff;
-              return a.odometerReading - b.odometerReading;
-            });
+            const sorted = [...entries].sort(compareAsc);
             
             const firstDate = new Date(sorted[0].date);
             const lastDate = new Date(sorted[sorted.length - 1].date);
@@ -576,11 +567,7 @@ export const useMileageStore = create<MileageState>()(
           // Need at least 1 entry in the season and either another entry in season
           // or an entry before the season to calculate miles
           const { entries } = get();
-          const allSorted = [...entries].sort((a, b) => {
-            const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
-            if (dateDiff !== 0) return dateDiff;
-            return a.odometerReading - b.odometerReading;
-          });
+          const allSorted = [...entries].sort(compareAsc);
 
           const entriesBeforeSeason = allSorted.filter((entry) => {
             const entryDate = new Date(entry.date);
