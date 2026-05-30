@@ -61,8 +61,9 @@ export const MileageEntryForm: React.FC<MileageEntryFormProps> = ({ onSuccess, i
   // Get the latest odometer reading for reference
   const latestReading = React.useMemo(() => {
     if (entries.length === 0) return null;
+    const toDateKey = (d: Date | string) => new Date(d).toISOString().slice(0, 10);
     const sorted = [...entries].sort((a, b) => {
-      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      const dateDiff = toDateKey(b.date).localeCompare(toDateKey(a.date));
       if (dateDiff !== 0) return dateDiff;
       return b.odometerReading - a.odometerReading;
     });
