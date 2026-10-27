@@ -248,7 +248,7 @@ export const FuelTopupsLog: React.FC<FuelTopupsLogProps> = ({
               />
             </div>
             <Select value={filterType} onValueChange={(value: 'ALL' | 'MANUAL' | 'ESTIMATED') => setFilterType(value)}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filter readings">
                 <Icon name="filter" className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
@@ -334,7 +334,7 @@ export const FuelTopupsLog: React.FC<FuelTopupsLogProps> = ({
           </div>
           
           <Select value={filterType} onValueChange={(value: 'ALL' | 'MANUAL' | 'ESTIMATED') => setFilterType(value)}>
-            <SelectTrigger className="w-full sm:w-[180px] h-10 sm:h-9">
+            <SelectTrigger className="w-full sm:w-[180px] h-10 sm:h-9" aria-label="Filter readings">
               <Icon name="filter" className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Filter" />
             </SelectTrigger>

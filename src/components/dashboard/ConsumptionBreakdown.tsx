@@ -137,20 +137,18 @@ export const ConsumptionBreakdown: React.FC<ConsumptionBreakdownProps> = ({ curr
   };
 
   return (
-    <Card className="bg-transparent w-full" style={{ padding: 'var(--space-md)' }}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base uppercase tracking-wide">Consumption Breakdown</CardTitle>
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'weekly' | 'daily')}>
+    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'weekly' | 'daily')}>
+      <Card className="bg-transparent w-full" style={{ padding: 'var(--space-md)' }}>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base uppercase tracking-wide">Consumption Breakdown</CardTitle>
             <TabsList>
               <TabsTrigger value="weekly">Weekly</TabsTrigger>
               <TabsTrigger value="daily">Daily</TabsTrigger>
             </TabsList>
-          </Tabs>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'weekly' | 'daily')}>
+          </div>
+        </CardHeader>
+        <CardContent>
           <TabsContent value="weekly" className="mt-4">
             {weeklyData.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">
@@ -227,8 +225,8 @@ export const ConsumptionBreakdown: React.FC<ConsumptionBreakdownProps> = ({ curr
               </ResponsiveContainer>
             )}
           </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Tabs>
   );
 };
