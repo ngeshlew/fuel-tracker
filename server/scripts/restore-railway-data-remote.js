@@ -1,18 +1,15 @@
 const { PrismaClient } = require('@prisma/client');
 
-// Use Railway database URL
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL || 'postgresql://postgres:mJrrmOFgOhazlTlfXuvEQzIrIqgULShK@postgres.railway.internal:5432/railway'
-    }
-  }
-});
+if (!process.env.DATABASE_URL) {
+  console.error('DATABASE_URL is not set');
+  process.exit(1);
+}
+
+const prisma = new PrismaClient();
 
 async function restoreData() {
   try {
     console.log('🔄 Restoring data to Railway database...');
-    console.log('Database URL:', process.env.DATABASE_URL ? 'Using env var' : 'Using hardcoded URL');
 
     // Clear existing data
     await prisma.meterReading.deleteMany();

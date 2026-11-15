@@ -20,6 +20,7 @@ import mileageRoutes from './routes/mileage';
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
+import { requireDriveToken } from './middleware/driveAuth';
 
 const app = express();
 const server = createServer(app);
@@ -89,7 +90,7 @@ app.get('/test-db', async (_req, res) => {
 // API Routes
 app.use('/api/fuel-topups', fuelTopupRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/ai', aiRoutes);
+app.use('/api/ai', requireDriveToken, aiRoutes);
 app.use('/api/fuel-prices', fuelPriceRoutes);
 app.use('/api/mileage', mileageRoutes);
 
