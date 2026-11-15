@@ -16,6 +16,7 @@ import path from 'path';
 import aiRoutes from './routes/ai';
 import fuelPriceRoutes from './routes/fuelPrices';
 import mileageRoutes from './routes/mileage';
+import driveMileageRoutes from './routes/driveMileage';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -93,6 +94,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ai', requireDriveToken, aiRoutes);
 app.use('/api/fuel-prices', fuelPriceRoutes);
 app.use('/api/mileage', mileageRoutes);
+app.use('/api/mileage-entries', driveMileageRoutes);
 
 // Error handling middleware
 app.use(notFound);

@@ -128,6 +128,12 @@ model MileageEntry {
   notes             String?
   linkedFuelTopupId String?          @map("linked_fuel_topup_id")
   type              MileageEntryType @default(MANUAL)
+  idempotencyKey    String?          @unique @map("idempotency_key")
+  source            String?
+  gpsTripDistance   Decimal?         @map("gps_trip_distance")
+  fromPlace         String?          @map("from_place")
+  toPlace           String?          @map("to_place")
+  photoUrl          String?          @map("photo_url")
   createdAt         DateTime         @default(now()) @map("created_at")
   updatedAt         DateTime         @updatedAt @map("updated_at")
 
